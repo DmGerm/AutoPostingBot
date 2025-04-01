@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
 
 namespace AutoPost_Bot
@@ -15,8 +14,6 @@ namespace AutoPost_Bot
                         .ConfigureContainer<ContainerBuilder>(cb =>
                         {
                         });
-
-            builder.Services.AddHostedService<BotService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()

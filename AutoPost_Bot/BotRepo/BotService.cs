@@ -3,19 +3,11 @@ using Telegram.Bot;
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class BotService : IBotService, IHostedService
+    public class BotService : IBotService
     {
 
         private TelegramBotClient? telegramBotClient;
         private CancellationTokenSource? cancellationTokenSource;
-
-
-        public BotService()
-        {
-            cancellationTokenSource = new CancellationTokenSource();
-            Task.Run(() => StartBot(cancellationTokenSource));
-        }
-
 
         public Task<TelegramBotClient> GetBotClient()
         {
@@ -25,33 +17,31 @@ namespace AutoPost_Bot.BotRepo
             return Task.FromResult(telegramBotClient);
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public async Task<TelegramBotClient> StartBot(CancellationTokenSource cancellationTokenSource)
+        public async Task<TelegramBotClient> StartBot(string botToken, CancellationTokenSource cancellationTokenSource)
         {
             try
             {
-                var botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN");
-
                 if (string.IsNullOrEmpty(botToken))
                 {
-                    var stringFromEnv = await File.ReadAllTextAsync("token.env");
-                    string pattern = @"^(?:\w+)=([\w:]+)$";
+                    botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? string.Empty;
 
-                    if (!Regex.IsMatch(stringFromEnv, pattern))
+                    if (string.IsNullOrEmpty(botToken))
                     {
-                        throw new InvalidOperationException("Invalid token.env file format.");
+                        var stringFromEnv = await File.ReadAllTextAsync("token.env");
+                        string pattern = @"^(?:\w+)=([\w:]+)$";
+
+                        if (!Regex.IsMatch(stringFromEnv, pattern))
+                        {
+                            throw new InvalidOperationException("Invalid token.env file format.");
+                        }
+
+                        botToken = Regex.Match(stringFromEnv, pattern).Groups[1].Value;
                     }
 
-                    botToken = Regex.Match(stringFromEnv, pattern).Groups[1].Value;
-                }
-
-                if (string.IsNullOrEmpty(botToken))
-                {
-                    throw new InvalidOperationException("Bot token is not provided!");
+                    if (string.IsNullOrEmpty(botToken))
+                    {
+                        throw new InvalidOperationException("Bot token is not provided!");
+                    }
                 }
 
                 telegramBotClient = new TelegramBotClient(botToken, cancellationToken: cancellationTokenSource.Token);
@@ -69,13 +59,5 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            if (cancellationTokenSource == null)
-                throw new InvalidOperationException("CS Token missing Exception.");
-
-            cancellationTokenSource.Cancel();
-            return Task.CompletedTask;
-        }
     }
 }
