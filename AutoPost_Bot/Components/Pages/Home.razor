@@ -1,7 +1,81 @@
 ﻿@page "/"
+@using AutoPost_Bot.BotRepo
+@using System.Text.RegularExpressions
+@rendermode InteractiveServer
+@inject IBotService BotService
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Настройка авто-постинга</h1>
+<div class="main_container">
+    <div class="input-group mb-3">
+        <button class="btn btn-outline-secondary"
+                type="button"
+                id="button-addon1"
+                @onclick="ToggleBot">
+            @(isBotRunning ? "Остановить бота" : "Запустить бота")
+        </button>
+        <input type="text"
+               class="form-control @(hasError ? "is-invalid" : "")"
+               placeholder="@botStatus"
+               aria-label="Введите Token Бота"
+               aria-describedby="button-addon1"
+               @bind="botToken" />
+    </div>
+    @if (hasError)
+    {
+        <div class="text-danger">Ошибка: @errorMessage</div>
+    }
+</div>
 
-Welcome to your new app.
+@code {
+    private string botToken = string.Empty;
+    private bool isBotRunning = false;
+    private string botStatus = "Введите Token Бота";
+    private bool hasError = false;
+    private string errorMessage = "";
+
+    private async Task ToggleBot()
+    {
+        hasError = false;
+        errorMessage = "";
+        string pattern = @"^(?:\w+)=(?:[\w:]+)$";
+
+        if (isBotRunning)
+        {
+            try
+            {
+                await BotService.StopBot();
+                isBotRunning = false;
+            }
+            catch (Exception ex)
+            {
+                hasError = true;
+                errorMessage = ex.Message;
+            }
+        }
+        else
+        {
+            try
+            {
+                if (!Regex.IsMatch(botToken, pattern))
+                {
+                    hasError = true;
+                    errorMessage = "Неверный формат токена";
+                    return;
+                }
+
+                await BotService.StartBot(botToken);
+                isBotRunning = true;
+            }
+            catch (Exception ex)
+            {
+                isBotRunning = false;
+                hasError = true;
+                errorMessage = ex.Message;
+            }
+        }
+
+        StateHasChanged();
+    }
+}

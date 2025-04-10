@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
 
 namespace AutoPost_Bot
@@ -13,6 +14,9 @@ namespace AutoPost_Bot
             builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
                         .ConfigureContainer<ContainerBuilder>(cb =>
                         {
+                            cb.RegisterType<BotService>()
+                                .As<IBotService>()
+                                .SingleInstance();
                         });
 
             // Add services to the container.

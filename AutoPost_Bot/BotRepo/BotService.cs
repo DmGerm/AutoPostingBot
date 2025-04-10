@@ -17,10 +17,34 @@ namespace AutoPost_Bot.BotRepo
             return Task.FromResult(telegramBotClient);
         }
 
-        public async Task<TelegramBotClient> StartBot(string botToken, CancellationTokenSource cancellationTokenSource)
+        public Task StopBot()
         {
             try
             {
+                if (telegramBotClient == null)
+                    throw new InvalidOperationException("Bot has not been started yet.");
+                cancellationTokenSource?.Cancel();
+                return Task.FromResult(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception in StopTheBot: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+
+                return Task.FromResult(false);
+            }
+        }
+
+        public async Task<TelegramBotClient> StartBot(string botToken)
+        {
+            try
+            {
+
+                if (string.IsNullOrEmpty(botToken))
+                {
+                    throw new InvalidOperationException("Bot token is not provided!");
+                }
+
                 if (string.IsNullOrEmpty(botToken))
                 {
                     botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? string.Empty;
@@ -38,10 +62,7 @@ namespace AutoPost_Bot.BotRepo
                         botToken = Regex.Match(stringFromEnv, pattern).Groups[1].Value;
                     }
 
-                    if (string.IsNullOrEmpty(botToken))
-                    {
-                        throw new InvalidOperationException("Bot token is not provided!");
-                    }
+
                 }
 
                 telegramBotClient = new TelegramBotClient(botToken, cancellationToken: cancellationTokenSource.Token);
