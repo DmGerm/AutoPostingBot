@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 
 namespace AutoPost_Bot.BotRepo
 {
@@ -39,30 +38,9 @@ namespace AutoPost_Bot.BotRepo
         {
             try
             {
-
                 if (string.IsNullOrEmpty(botToken))
                 {
                     throw new InvalidOperationException("Bot token is not provided!");
-                }
-
-                if (string.IsNullOrEmpty(botToken))
-                {
-                    botToken = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN") ?? string.Empty;
-
-                    if (string.IsNullOrEmpty(botToken))
-                    {
-                        var stringFromEnv = await File.ReadAllTextAsync("token.env");
-                        string pattern = @"^(?:\w+)=([\w:]+)$";
-
-                        if (!Regex.IsMatch(stringFromEnv, pattern))
-                        {
-                            throw new InvalidOperationException("Invalid token.env file format.");
-                        }
-
-                        botToken = Regex.Match(stringFromEnv, pattern).Groups[1].Value;
-                    }
-
-
                 }
 
                 telegramBotClient = new TelegramBotClient(botToken, cancellationToken: cancellationTokenSource.Token);

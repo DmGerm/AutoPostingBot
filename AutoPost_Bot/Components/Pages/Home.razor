@@ -3,6 +3,7 @@
 @using System.Text.RegularExpressions
 @rendermode InteractiveServer
 @inject IBotService BotService
+@inject IJSRuntime JS
 
 <PageTitle>Home</PageTitle>
 
@@ -26,6 +27,34 @@
     {
         <div class="text-danger">Ошибка: @errorMessage</div>
     }
+    <div class="post_container">
+        <h1>Настройка авто-постинга</h1>
+        <div class="input-group mb-3">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</button>
+            <ul class="dropdown-menu">
+                @foreach (var item in items)
+                {
+                    <li><a class="dropdown-item" href="#">@item</a></li>
+                }
+            </ul>
+            <input type="text" class="form-control" aria-label="Text input with dropdown button">
+        </div>
+        <div class="input-group" id="datetimepicker-publication" data-td-target-input="nearest" data-td-target-toggle="nearest">
+            <span class="input-group-text">Дата публикации</span>
+            <input type="text" class="form-control" data-td-target="#datetimepicker-publication" />
+            <span class="input-group-text" data-td-toggle="datetimepicker" data-td-target="#datetimepicker-publication">
+                <i class="bi bi-calendar-event"></i>
+            </span>
+        </div>
+        <div class="input-group mb-3">
+            <span class="input-group-text">Повторить через</span>
+            <input type="number" class="form-control" placeholder="Дни" @bind="" id="repeat-days" min="0">
+            <input type="number" class="form-control" placeholder="Часы" @bind="" id="repeat-hours" min="0" max="23">
+            <input type="number" class="form-control" placeholder="Минуты" @bind="" id="repeat-minutes" min="0" max="59">
+        </div>
+
+    </div>
+
 </div>
 
 @code {
@@ -34,6 +63,7 @@
     private string botStatus = "Введите Token Бота";
     private bool hasError = false;
     private string errorMessage = "";
+    private List<string> items = new() { "Action", "Another action", "Something else here" };
 
     private async Task ToggleBot()
     {
@@ -77,5 +107,12 @@
         }
 
         StateHasChanged();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initDatePicker", "datetimepicker-publication");
+        }
     }
 }
