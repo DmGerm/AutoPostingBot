@@ -2,12 +2,13 @@
 using Autofac.Extensions.DependencyInjection;
 using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
+using AutoPost_Bot.PostsRepository;
 
 namespace AutoPost_Bot
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,9 @@ namespace AutoPost_Bot
                             cb.RegisterType<BotService>()
                                 .As<IBotService>()
                                 .SingleInstance();
+
+                            cb.RegisterType<PostsRepo>()
+                            .As<IPostsRepo>().SingleInstance();
                         });
 
             // Add services to the container.

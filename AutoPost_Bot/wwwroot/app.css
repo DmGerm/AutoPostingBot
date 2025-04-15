@@ -73,3 +73,8 @@ h1:focus {
 .post_container {
     margin-top: 30px;
 }
+
+.add_button_container
+{
+    margin-top: 20px;
+}

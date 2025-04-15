@@ -1,27 +1,32 @@
 ﻿@page "/"
 @using AutoPost_Bot.BotRepo
 @using System.Text.RegularExpressions
+@using AutoPost_Bot.Models
+@using AutoPost_Bot.PostsRepository
 @rendermode InteractiveServer
 @inject IBotService BotService
 @inject IJSRuntime JS
+@inject IPostsRepo PostsRepo
+
+@*TODO: Добавить кнопку обновления списка постов*@
 
 <PageTitle>Home</PageTitle>
 
-<h1>Настройка авто-постинга</h1>
+<h1>Настройка бота</h1>
 <div class="main_container">
     <div class="input-group mb-3">
         <button class="btn btn-outline-secondary"
-        type="button"
-        id="button-addon1"
-        @onclick="ToggleBot">
+                type="button"
+                id="button-addon1"
+                @onclick="ToggleBot">
             @(isBotRunning ? "Остановить бота" : "Запустить бота")
         </button>
         <input type="text"
-        class="form-control @(hasError ? "is-invalid" : "")"
-        placeholder="@botStatus"
-        aria-label="Введите Token Бота"
-        aria-describedby="button-addon1"
-        @bind="botToken" />
+               class="form-control @(hasError ? "is-invalid" : "")"
+               placeholder="@botStatus"
+               aria-label="Введите Token Бота"
+               aria-describedby="button-addon1"
+               @bind="botToken" />
     </div>
     @if (hasError)
     {
@@ -29,7 +34,7 @@
     }
     <div class="post_container">
         <h1>Настройка авто-постинга</h1>
-        @if (posts.Count == 0)
+        @if (!posts.Any())
         {
             <p>Постов для публикации еще нет</p>
         }
@@ -37,35 +42,52 @@
         {
             <p>Постов для публикации: @posts.Count</p>
         }
-        @for (post in posts)
+        @for (int i = 0; i < posts.Count; i++)
         {
-        
-        <div class="input-group mb-3">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Dropdown</button>
-            <ul class="dropdown-menu">
-                @foreach (var item in items)
-                {
-                    <li><a class="dropdown-item" href="#">@item</a></li>
-                }
-            </ul>
-            <input type="text" class="form-control" aria-label="Text input with dropdown button">
-        </div>
-        <div class="input-group" id="datetimepicker-publication" data-td-target-input="nearest" data-td-target-toggle="nearest">
-            <span class="input-group-text">Дата публикации</span>
-            <input type="text" class="form-control" data-td-target="#datetimepicker-publication" @bind="" />
-            <span class="input-group-text" data-td-toggle="datetimepicker" data-td-target="#datetimepicker-publication">
-                <i class="bi bi-calendar-event"></i>
-            </span>
-        </div>
-        <div class="input-group mb-3">
-            <span class="input-group-text">Повторить через</span>
-            <input type="number" class="form-control" placeholder="Дни" @bind="" id="repeat-days" min="0">
-            <input type="number" class="form-control" placeholder="Часы" @bind="" id="repeat-hours" min="0" max="23">
-            <input type="number" class="form-control" placeholder="Минуты" @bind="" id="repeat-minutes" min="0" max="59">
-        </div>
-        }
-        <button type="button" class="btn btn-primary btn-lg">Large button</button>
+            var datetimePickerId = $"datetimepicker-publication-{i}";
 
+            <div class="input-group mb-3">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Выбери канал или группу</button>
+                <ul class="dropdown-menu">
+                    @foreach (var item in items)
+                    {
+                        <li><a class="dropdown-item" href="#">@item</a></li>
+                    }
+                </ul>
+                <div class="form-floating mb-3 w-100">
+                    <textarea class="form-control" style="height: 150px;" @bind="posts[i].PostText" placeholder="Введите текст поста"></textarea>
+                    <label>Текст поста</label>
+                </div>
+            </div>
+            <div class="input-group" id="@datetimePickerId" data-td-target-input="nearest" data-td-target-toggle="nearest">
+                <span class="input-group-text">Дата публикации</span>
+                <input type="text" class="form-control" data-td-target="#@datetimePickerId" @bind="posts[i].PostDateTime" />
+                <span class="input-group-text" data-td-toggle="datetimepicker" data-td-target="#@datetimePickerId">
+                    <i class="bi bi-calendar-event"></i>
+                </span>
+            </div>
+            <div class="input-group mb-3">
+                <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatDays" min="0">
+                <span class="input-group-text">дней</span>
+
+                <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatHours" min="0" max="23">
+                <span class="input-group-text">часов</span>
+
+                <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatMinutes" min="0" max="59">
+                <span class="input-group-text">минут</span>
+            </div>
+        }
+        <div class="save_button_container">
+            <button type="button" class="btn btn-primary btn-lg">
+                Сохранить изменения
+            </button>
+        </div>
+        <div class="add_button_container">
+            <button type="button" class="btn btn-primary btn-lg"
+                    @onclick="AddPost">
+                Добавить пост
+            </button>
+        </div>
     </div>
 
 </div>
@@ -76,7 +98,13 @@
     private string botStatus = "Введите Token Бота";
     private bool hasError = false;
     private string errorMessage = "";
-    private List<string> items = new() { "Action", "Another action", "Something else here" };
+    private List<string> items = new() { "Group1", "Group2", "Antorher Group" };
+    private List<PostModel> posts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        posts = await PostsRepo.GetPostsAsync();
+    }
 
     private async Task ToggleBot()
     {
@@ -123,9 +151,20 @@
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await JS.InvokeVoidAsync("initDatePicker", "datetimepicker-publication");
-        }
+        var pickerIds = posts.Select((_, i) => $"datetimepicker-publication-{i}").ToList();
+        await JS.InvokeVoidAsync("initDatePickers", pickerIds);
+    }
+    private void AddPost(MouseEventArgs args)
+    {
+        posts.Add(new PostModel
+            {
+                PostText = "",
+                PostDateTime = DateTime.Now,
+                RepeatDays = 0,
+                RepeatHours = 0,
+                RepeatMinutes = 0
+            });
+
+        StateHasChanged();
     }
 }

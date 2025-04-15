@@ -1,10 +1,12 @@
 ﻿namespace AutoPost_Bot.Models
 {
-    public class postModel
+    public class PostModel
     {
         public Guid Id { get; set; }
         public string? PostText { get; set; }
         public DateTime? PostDateTime { get; set; }
-        public DateTime? RepeatDateTime { get; set; }
+        public int RepeatDays { get; set; }
+        public int RepeatHours { get; set; }
+        public int RepeatMinutes { get; set; }
     }
 }

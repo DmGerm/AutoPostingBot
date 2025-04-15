@@ -1,23 +1,18 @@
-﻿window.initDatePicker = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-        new tempusDominus.TempusDominus(el, {
-            display: {
-                components: {
-                    calendar: true,
-                    date: true,
-                    month: true,
-                    year: true,
-                    decades: true,
-                    clock: true,
-                    hours: true,
-                    minutes: true,
-                    seconds: false
+﻿window.initDatePickers = (ids) => {
+    if (!window.tempusDominus) return;
+
+    ids.forEach(id => {
+        const element = document.getElementById(id);
+        if (element && !element.classList.contains('td-initialized')) {
+            new tempusDominus.TempusDominus(element, {
+                display: {
+                    components: {
+                        calendar: true,
+                        clock: true
+                    }
                 }
-            },
-            localization: {
-                locale: 'ru'
-            }
-        });
-    }
-}
+            });
+            element.classList.add('td-initialized');
+        }
+    });
+};
