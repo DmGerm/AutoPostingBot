@@ -2,17 +2,23 @@
     if (!window.tempusDominus) return;
 
     ids.forEach(id => {
-        const element = document.getElementById(id);
-        if (element && !element.classList.contains('td-initialized')) {
-            new tempusDominus.TempusDominus(element, {
+        const wrapper = document.getElementById(id);
+        if (wrapper && !wrapper.classList.contains('td-initialized')) {
+            new tempusDominus.TempusDominus(wrapper, {
+                container: wrapper, 
                 display: {
                     components: {
                         calendar: true,
                         clock: true
+                    },
+                    buttons: {
+                        today: true,
+                        clear: true,
+                        close: true
                     }
                 }
             });
-            element.classList.add('td-initialized');
+            wrapper.classList.add('td-initialized');
         }
     });
 };

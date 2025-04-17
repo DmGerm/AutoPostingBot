@@ -59,12 +59,20 @@
                     <label>Текст поста</label>
                 </div>
             </div>
-            <div class="input-group" id="@datetimePickerId" data-td-target-input="nearest" data-td-target-toggle="nearest">
-                <span class="input-group-text">Дата публикации</span>
-                <input type="text" class="form-control" data-td-target="#@datetimePickerId" @bind="posts[i].PostDateTime" />
-                <span class="input-group-text" data-td-toggle="datetimepicker" data-td-target="#@datetimePickerId">
-                    <i class="bi bi-calendar-event"></i>
-                </span>
+            <div class="position-relative">
+                <div class="input-group mb-3" id="@datetimePickerId">
+                    <span class="input-group-text">Дата публикации</span>
+                    <input type="text"
+                           class="form-control"
+                           data-td-target="#@datetimePickerId"
+                           @bind="posts[i].PostDateTime" />
+
+                    <span class="input-group-text"
+                          data-td-toggle="datetimepicker"
+                          data-td-target="#@datetimePickerId">
+                        <i class="bi bi-calendar-event"></i>
+                    </span>
+                </div>
             </div>
             <div class="input-group mb-3">
                 <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatDays" min="0">
