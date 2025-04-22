@@ -9,8 +9,7 @@ namespace AutoPost_Bot.Handlers
         private readonly IGroupRepo _groupRepo = groupRepo;
         public async Task OnUpdate(Update update)
         {
-            if (update == null)
-                throw new ArgumentNullException(nameof(update));
+            ArgumentNullException.ThrowIfNull(update);
 
             if (update.Type == UpdateType.MyChatMember && update.MyChatMember != null)
             {

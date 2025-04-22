@@ -2,7 +2,7 @@
 {
     public interface IGroupRepo
     {
-        public void AddGroup(string groupName, long groupId);
+        public void AddGroup(long groupId, string groupName);
         public Task<string> RemoveGroupAsync(string groupName);
         public Task<string> ChangeGroupAsync(long groupId);
         public Task<Dictionary<long, string>> GetAllGroupsAsync();
