@@ -16,21 +16,25 @@
 <div class="main_container">
     <div class="input-group mb-3">
         <button class="btn btn-outline-secondary"
-                type="button"
-                id="button-addon1"
-                @onclick="ToggleBot">
+        type="button"
+        id="button-addon1"
+        @onclick="ToggleBot">
             @(isBotRunning ? "Остановить бота" : "Запустить бота")
         </button>
         <input type="text"
-               class="form-control @(hasError ? "is-invalid" : "")"
-               placeholder="@botStatus"
-               aria-label="Введите Token Бота"
-               aria-describedby="button-addon1"
-               @bind="botToken" />
+        class="form-control @(hasError ? "is-invalid" : "")"
+        placeholder="@botStatus"
+        aria-label="Введите Token Бота"
+        aria-describedby="button-addon1"
+        @bind="botToken" />
     </div>
     @if (hasError)
     {
         <div class="text-danger">Ошибка: @errorMessage</div>
+    }
+    @if (hasStatus)
+    {
+        <div class="text-success">@statusMessage</div>
     }
     <div class="post_container">
         <h1>Настройка авто-постинга</h1>
@@ -63,13 +67,13 @@
                 <div class="input-group mb-3" id="@datetimePickerId">
                     <span class="input-group-text">Дата публикации</span>
                     <input type="text"
-                           class="form-control"
-                           data-td-target="#@datetimePickerId"
-                           @bind="posts[i].PostDateTime" />
+                    class="form-control"
+                    data-td-target="#@datetimePickerId"
+                    @bind="posts[i].PostDateTime" />
 
                     <span class="input-group-text"
-                          data-td-toggle="datetimepicker"
-                          data-td-target="#@datetimePickerId">
+                    data-td-toggle="datetimepicker"
+                    data-td-target="#@datetimePickerId">
                         <i class="bi bi-calendar-event"></i>
                     </span>
                 </div>
@@ -92,7 +96,7 @@
         </div>
         <div class="add_button_container">
             <button type="button" class="btn btn-primary btn-lg"
-                    @onclick="AddPost">
+            @onclick="AddPost">
                 Добавить пост
             </button>
         </div>
@@ -105,7 +109,9 @@
     private bool isBotRunning = false;
     private string botStatus = "Введите Token Бота";
     private bool hasError = false;
+    private bool hasStatus = false;
     private string errorMessage = "";
+    private string statusMessage = "";
     private List<string> items = new() { "Group1", "Group2", "Antorher Group" };
     private List<PostModel> posts = new();
 
@@ -118,7 +124,7 @@
     {
         hasError = false;
         errorMessage = "";
-        string pattern = @"^(?:\w+)=(?:[\w:]+)$";
+        string pattern = @"^(?:\w+):(?:[\w:]+)";
 
         if (isBotRunning)
         {
@@ -126,9 +132,12 @@
             {
                 await BotService.StopBot();
                 isBotRunning = false;
+                hasError = false;
+                statusMessage = "Бот успешно остановлен!";
             }
             catch (Exception ex)
             {
+                hasStatus = false;
                 hasError = true;
                 errorMessage = ex.Message;
             }
@@ -140,16 +149,21 @@
                 if (!Regex.IsMatch(botToken, pattern))
                 {
                     hasError = true;
+                    hasStatus = false;
                     errorMessage = "Неверный формат токена";
                     return;
                 }
 
                 await BotService.StartBot(botToken);
                 isBotRunning = true;
+                hasStatus = true;
+                hasError = false;
+                statusMessage = "Бот успешно запущен!";
             }
             catch (Exception ex)
             {
                 isBotRunning = false;
+                hasStatus = false;
                 hasError = true;
                 errorMessage = ex.Message;
             }

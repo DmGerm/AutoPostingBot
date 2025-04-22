@@ -3,6 +3,7 @@ using Autofac.Extensions.DependencyInjection;
 using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
 using AutoPost_Bot.PostsRepository;
+using AutoPost_Bot.TelegramGroupsRepo;
 
 namespace AutoPost_Bot
 {
@@ -21,6 +22,10 @@ namespace AutoPost_Bot
 
                             cb.RegisterType<PostsRepo>()
                             .As<IPostsRepo>().SingleInstance();
+
+                            cb.RegisterType<GroupRepo>()
+                            .As<IGroupRepo>().SingleInstance();
+
                         });
 
             // Add services to the container.

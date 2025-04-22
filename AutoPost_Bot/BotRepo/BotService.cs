@@ -1,4 +1,6 @@
-﻿using Telegram.Bot;
+﻿using AutoPost_Bot.Handlers;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -7,7 +9,8 @@ namespace AutoPost_Bot.BotRepo
     public class BotService : IBotService
     {
         private TelegramBotClient? telegramBotClient;
-        private readonly CancellationTokenSource cts = new();
+        private CancellationTokenSource? cts;
+        private readonly UpdateHandler updateHandler = new();
 
         public Task<TelegramBotClient> GetBotClient()
         {
@@ -23,7 +26,7 @@ namespace AutoPost_Bot.BotRepo
             {
                 if (telegramBotClient == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
-
+                cts.Cancel();
                 telegramBotClient = null;
                 return Task.CompletedTask;
             }
@@ -43,13 +46,15 @@ namespace AutoPost_Bot.BotRepo
                 {
                     throw new InvalidOperationException("Bot token is not provided!");
                 }
-
+                cts = new CancellationTokenSource();
 
 
                 telegramBotClient = new TelegramBotClient(botToken, cancellationToken: cts.Token);
 
                 var me = await telegramBotClient.GetMe();
                 telegramBotClient.OnMessage += OnMessage;
+                telegramBotClient.OnUpdate += updateHandler.OnUpdate;
+                telegramBotClient.OnError += OnError;
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
@@ -65,9 +70,11 @@ namespace AutoPost_Bot.BotRepo
 
         async Task OnMessage(Message msg, UpdateType type)
         {
-            if (msg.Text is null || telegramBotClient is null) return;
-            Console.WriteLine($"Received {type} '{msg.Text}' in {msg.Chat}");
-            await telegramBotClient.SendMessage(msg.Chat.Id, $"{msg.From?.FirstName} said: {msg.Text}");
+        }
+
+        async Task OnError(Exception exception, HandleErrorSource source)
+        {
+            Console.WriteLine(exception);
         }
     }
 }
