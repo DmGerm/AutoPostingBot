@@ -87,3 +87,7 @@ h1:focus {
     position: absolute !important;
     z-index: 9999 !important;
 }
+
+.post {
+    margin-top: 30px;
+}

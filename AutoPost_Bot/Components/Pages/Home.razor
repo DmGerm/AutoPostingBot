@@ -9,6 +9,7 @@
 @inject IJSRuntime JS
 @inject IPostsRepo PostsRepo
 @inject IGroupRepo GroupRepo;
+@implements IDisposable
 
 @*TODO: Добавить кнопку обновления списка постов*@
 
@@ -25,7 +26,7 @@
         </button>
         <input type="text"
         class="form-control @(hasError ? "is-invalid" : "")"
-        placeholder = "Введите токен бота"
+        placeholder="Введите токен бота"
         aria-label="Bot Token input form"
         aria-describedby="button-addon1"
         @bind="botToken" />
@@ -52,19 +53,21 @@
         {
             var datetimePickerId = $"datetimepicker-publication-{i}";
 
-            <div class="input-group mb-3">
+            <div class="dropdown">
                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     @(posts[i].GroupID != 0 ? groups[posts[i].GroupID] : "Выберите канал или группу")
-                </button>                <ul class="dropdown-menu">
+                </button>
+                <ul class="dropdown-menu">
                     @foreach (var group in groups)
                     {
                         <li><a class="dropdown-item" href="#" @onclick="() => SelectGroup(i, group.Key)">@group.Value</a></li>
                     }
                 </ul>
-                <div class="form-floating mb-3 w-100">
-                    <textarea class="form-control" style="height: 150px;" @bind="posts[i].PostText" placeholder="Введите текст поста"></textarea>
-                    <label>Текст поста</label>
-                </div>
+            </div>
+
+            <div class="form-floating mb-3 w-100 post">
+                <textarea class="form-control" style="height: 150px;" @bind="posts[i].PostText" placeholder="Введите текст поста"></textarea>
+                <label>Текст поста</label>
             </div>
             <div class="position-relative">
                 <div class="input-group mb-3" id="@datetimePickerId">
@@ -115,12 +118,19 @@
     private string statusMessage = "";
     private List<PostModel> posts = new();
     private Dictionary<long, string>? groups;
+    private bool isSubscribe = false;
 
     protected override async Task OnInitializedAsync()
     {
         posts = await PostsRepo.GetPostsAsync();
-        groups = await GroupRepo.GetAllGroupsAsync();
         botToken = BotService.GetBotToken();
+        if (!isSubscribe)
+        {
+            GroupRepo.StateChanged += OnGroupRepoChanged;
+            isSubscribe = true;
+        }
+        groups = GroupRepo.GetAllGroupsAsync().Result;
+
     }
 
     private async Task ToggleBot()
@@ -195,5 +205,20 @@
             });
 
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        GroupRepo.StateChanged -= OnGroupRepoChanged;
+    }
+
+    private async void OnGroupRepoChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            groups = GroupRepo.GetAllGroupsAsync().Result;
+            Console.WriteLine(String.Join("\n", groups));
+            StateHasChanged();
+        });
     }
 }

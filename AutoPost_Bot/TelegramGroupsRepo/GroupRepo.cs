@@ -1,9 +1,9 @@
-﻿
-namespace AutoPost_Bot.TelegramGroupsRepo
+﻿namespace AutoPost_Bot.TelegramGroupsRepo
 {
     public class GroupRepo : IGroupRepo
     {
         private Dictionary<long, string> groups = [];
+        public event Action? StateChanged;
 
         public void AddGroup(long groupId, string groupName)
         {
@@ -13,6 +13,8 @@ namespace AutoPost_Bot.TelegramGroupsRepo
             }
 
             groups.Add(groupId, groupName);
+
+            OnStateChanged();
         }
 
         public Task<string> ChangeGroupAsync(long groupId)
@@ -25,6 +27,11 @@ namespace AutoPost_Bot.TelegramGroupsRepo
         public Task<string> RemoveGroupAsync(string groupName)
         {
             throw new NotImplementedException();
+        }
+
+        private void OnStateChanged()
+        {
+            StateChanged?.Invoke(); 
         }
 
     }
