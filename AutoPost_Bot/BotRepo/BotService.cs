@@ -1,4 +1,5 @@
 ﻿using AutoPost_Bot.Handlers;
+using AutoPost_Bot.Models;
 using AutoPost_Bot.TelegramGroupsRepo;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -7,28 +8,30 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotService(IGroupRepo groupRepo) : IBotService
     {
-        private TelegramBotClient? telegramBotClient;
         private CancellationTokenSource? cts;
         private readonly UpdateHandler updateHandler = new(groupRepo);
+        private BotModel bot = new() { Id = new Guid()};
 
         public Task<TelegramBotClient> GetBotClient()
         {
-            if (telegramBotClient == null)
+            if (bot.BotClient == null)
                 throw new InvalidOperationException("Bot has not been started yet.");
 
-            return Task.FromResult(telegramBotClient);
+            return Task.FromResult(bot.BotClient);
         }
 
         public Task StopBot()
         {
             try
             {
-                if (telegramBotClient == null)
+                if (bot.BotClient == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
 
                 cts?.Cancel();
 
-                telegramBotClient = null;
+                bot.BotClient = null;
+                bot.IsActive = false;
+
                 return Task.CompletedTask;
             }
             catch (Exception ex)
@@ -49,15 +52,20 @@ namespace AutoPost_Bot.BotRepo
                 }
                 cts = new CancellationTokenSource();
 
-                telegramBotClient = new TelegramBotClient(botToken, cancellationToken: cts.Token);
+                bot.BotClient = new TelegramBotClient(botToken, cancellationToken: cts.Token);
 
-                var me = await telegramBotClient.GetMe();
-                telegramBotClient.OnUpdate += updateHandler.OnUpdate;
-                telegramBotClient.OnError += OnError;
+                bot.Token = botToken;
+
+                var me = await bot.BotClient.GetMe();
+
+                bot.IsActive = true;
+
+                bot.BotClient.OnUpdate += updateHandler.OnUpdate;
+                bot.BotClient.OnError += OnError;
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
-                return telegramBotClient;
+                return bot.BotClient;
             }
             catch (Exception ex)
             {
@@ -70,6 +78,22 @@ namespace AutoPost_Bot.BotRepo
         async Task OnError(Exception exception, HandleErrorSource source)
         {
             Console.WriteLine(exception);
+        }
+
+        public bool IsBotActive() => bot.IsActive;
+
+        public string GetBotToken() => bot.Token;
+
+        public void SetBotToken(string botToken)
+        {
+            try
+            {
+                bot.Token = botToken;
+            }
+            catch
+            {
+                throw new Exception("Error when updating bot Token.");
+            }
         }
     }
 }
