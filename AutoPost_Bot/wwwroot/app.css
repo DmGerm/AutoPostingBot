@@ -81,13 +81,9 @@ h1:focus {
 
 .input-group {
     position: relative;
-}
-
-.tempus-dominus-widget {
-    position: absolute !important;
-    z-index: 9999 !important;
+    margin-top: 20px;
 }
 
 .post {
-    margin-top: 30px;
+    margin-top: 20px;
 }

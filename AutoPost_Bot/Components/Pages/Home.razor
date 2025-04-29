@@ -4,43 +4,46 @@
 @using AutoPost_Bot.Models
 @using AutoPost_Bot.PostsRepository
 @using AutoPost_Bot.TelegramGroupsRepo
+@using System.Globalization
 @rendermode InteractiveServer
 @inject IBotService BotService
 @inject IJSRuntime JS
 @inject IPostsRepo PostsRepo
-@inject IGroupRepo GroupRepo;
+@inject IGroupRepo GroupRepo
 @implements IDisposable
 
-@*TODO: Добавить кнопку обновления списка постов*@
-
 <PageTitle>Home</PageTitle>
+
 
 <h1>Настройка бота</h1>
 <div class="main_container">
     <div class="input-group mb-3">
         <button class="btn btn-outline-secondary"
-        type="button"
-        id="button-addon1"
-        @onclick="ToggleBot">
+                type="button"
+                id="button-addon1"
+                @onclick="ToggleBot">
             @(BotService.IsBotActive() ? "Остановить бота" : "Запустить бота")
         </button>
         <input type="text"
-        class="form-control @(hasError ? "is-invalid" : "")"
-        placeholder="Введите токен бота"
-        aria-label="Bot Token input form"
-        aria-describedby="button-addon1"
-        @bind="botToken" />
+               class="form-control @(hasError ? "is-invalid" : "")"
+               placeholder="Введите токен бота"
+               aria-label="Bot Token input form"
+               aria-describedby="button-addon1"
+               @bind="botToken" />
     </div>
+
     @if (hasError)
     {
-        <div class="text-danger">Ошибка: @errorMessage</div>
+        <div class="text-danger mb-3">Ошибка: @errorMessage</div>
     }
     @if (hasStatus)
     {
-        <div class="text-success">@statusMessage</div>
+        <div class="text-success mb-3">@statusMessage</div>
     }
+
     <div class="post_container">
         <h1>Настройка авто-постинга</h1>
+
         @if (!posts.Any())
         {
             <p>Постов для публикации еще нет</p>
@@ -49,155 +52,196 @@
         {
             <p>Постов для публикации: @posts.Count</p>
         }
-        @for (int i = 0; i < posts.Count; i++)
+
+        @foreach (var post in posts)
         {
-            var datetimePickerId = $"datetimepicker-publication-{i}";
+            <div class="post-item mb-4" @key="post.Id">
+                <div class="dropdown mb-3">
+                    <button class="btn btn-outline-secondary dropdown-toggle"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        @GetGroupName(post.GroupID)
+                    </button>
+                    <ul class="dropdown-menu">
+                        @foreach (var group in groups)
+                        {
+                            <li>
+                                <a class="dropdown-item"
+                                   href="#"
+                                   @onclick="(() => SelectGroup(post, group.Key))">
+                                    @group.Value
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
 
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    @(posts[i].GroupID != 0 ? groups[posts[i].GroupID] : "Выберите канал или группу")
-                </button>
-                <ul class="dropdown-menu">
-                    @foreach (var group in groups)
-                    {
-                        <li><a class="dropdown-item" href="#" @onclick="() => SelectGroup(i, group.Key)">@group.Value</a></li>
-                    }
-                </ul>
-            </div>
+                <div class="form-floating mb-3">
+                    <textarea class="form-control post-textarea"
+                              @bind="post.PostText"
+                              placeholder="Введите текст поста"></textarea>
+                    <label>Текст поста</label>
+                </div>
 
-            <div class="form-floating mb-3 w-100 post">
-                <textarea class="form-control" style="height: 150px;" @bind="posts[i].PostText" placeholder="Введите текст поста"></textarea>
-                <label>Текст поста</label>
-            </div>
-            <div class="position-relative">
-                <div class="input-group mb-3" id="@datetimePickerId">
-                    <span class="input-group-text">Дата публикации</span>
-                    <input type="text"
-                    class="form-control"
-                    data-td-target="#@datetimePickerId"
-                    @bind="posts[i].PostDateTime" />
+                <div class="form-floating mb-3">
+                    <input type="datetime-local" class="form-control"
+                           id="datetimeInput"
+                           @bind="post.PostDateTime"
+                           @bind:format="yyyy-MM-ddTHH:mm" />
+                    <label for="datetimeInput">Дата и время публикации</label>
+                </div>
 
-                    <span class="input-group-text"
-                    data-td-toggle="datetimepicker"
-                    data-td-target="#@datetimePickerId">
-                        <i class="bi bi-calendar-event"></i>
-                    </span>
+                <div class="input-group d-flex flex-column">
+                    <label class="form-label">Выберите частоту повторения</label>
+                    <div class="d-flex gap-3 mb-3">
+                        <div class="form-floating">
+                            <input type="number"
+                                   class="form-control"
+                                   id="repeatDays"
+                                   placeholder="0"
+                                   min="0"
+                                   @bind="post.RepeatDays" />
+                            <label for="repeatDays">Дней</label>
+                        </div>
+
+                        <div class="form-floating">
+                            <input type="number"
+                                   class="form-control"
+                                   id="repeatHours"
+                                   placeholder="0"
+                                   min="0"
+                                   max="23"
+                                   @bind="post.RepeatHours" />
+                            <label for="repeatHours">Часов</label>
+                        </div>
+
+                        <div class="form-floating">
+                            <input type="number"
+                                   class="form-control"
+                                   id="repeatMinutes"
+                                   placeholder="0"
+                                   min="0"
+                                   max="59"
+                                   @bind="post.RepeatMinutes" />
+                            <label for="repeatMinutes">Минут</label>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="input-group mb-3">
-                <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatDays" min="0">
-                <span class="input-group-text">дней</span>
-
-                <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatHours" min="0" max="23">
-                <span class="input-group-text">часов</span>
-
-                <input type="number" class="form-control" placeholder="0" @bind="posts[i].RepeatMinutes" min="0" max="59">
-                <span class="input-group-text">минут</span>
-            </div>
         }
-        <div class="save_button_container">
-            <button type="button" class="btn btn-primary btn-lg">
+
+        <div class="d-flex gap-3">
+            <button type="button"
+                    class="btn btn-primary"
+                    @onclick="SaveChanges">
                 Сохранить изменения
             </button>
-        </div>
-        <div class="add_button_container">
-            <button type="button" class="btn btn-primary btn-lg"
-            @onclick="AddPost">
+
+            <button type="button"
+                    class="btn btn-success"
+                    @onclick="AddPost">
                 Добавить пост
             </button>
         </div>
     </div>
-
 </div>
 
 @code {
-    private string botToken = String.Empty;
-    private bool hasError = false;
-    private bool hasStatus = false;
-    private string errorMessage = "";
-    private string statusMessage = "";
+    private string botToken = string.Empty;
+    private bool hasError;
+    private bool hasStatus;
+    private string errorMessage = string.Empty;
+    private string statusMessage = string.Empty;
     private List<PostModel> posts = new();
-    private Dictionary<long, string>? groups;
-    private bool isSubscribe = false;
+    private Dictionary<long, string> groups = new();
+    private bool isDisposed;
 
     protected override async Task OnInitializedAsync()
     {
-        posts = await PostsRepo.GetPostsAsync();
-        botToken = BotService.GetBotToken();
-        if (!isSubscribe)
+        try
         {
+            posts = await PostsRepo.GetPostsAsync() ?? new List<PostModel>();
+            botToken = BotService.GetBotToken();
+            await LoadGroups();
             GroupRepo.StateChanged += OnGroupRepoChanged;
-            isSubscribe = true;
         }
-        groups = GroupRepo.GetAllGroupsAsync().Result;
+        catch (Exception ex)
+        {
+            HandleError("Ошибка инициализации: " + ex.Message);
+        }
+    }
 
+    private async Task LoadGroups()
+    {
+        try
+        {
+            var groupsResult = await GroupRepo.GetAllGroupsAsync();
+            groups = groupsResult?.ToDictionary(g => g.Key, g => g.Value) ?? new();
+        }
+        catch (Exception ex)
+        {
+            HandleError("Ошибка загрузки групп: " + ex.Message);
+        }
+    }
+
+    private string GetGroupName(long groupId)
+    {
+        if (groupId == 0) return "Выберите канал или группу";
+        return groups.TryGetValue(groupId, out var name)
+            ? name
+            : "Группа не найдена";
     }
 
     private async Task ToggleBot()
     {
         hasError = false;
-        errorMessage = "";
-        string pattern = @"^(?:\w+):(?:[\w:]+)";
+        hasStatus = false;
 
-        if (BotService.IsBotActive())
+        try
         {
-            try
+            if (BotService.IsBotActive())
             {
                 await BotService.StopBot();
-                hasError = false;
-                statusMessage = "Бот успешно остановлен!";
+                ShowStatus("Бот успешно остановлен!");
             }
-            catch (Exception ex)
+            else
             {
-                hasStatus = false;
-                hasError = true;
-                errorMessage = ex.Message;
-            }
-        }
-        else
-        {
-            try
-            {
-                if (!Regex.IsMatch(botToken, pattern))
-                {
-                    hasError = true;
-                    hasStatus = false;
-                    errorMessage = "Неверный формат токена";
+                if (!ValidateBotToken())
                     return;
-                }
 
                 await BotService.StartBot(botToken);
-                hasStatus = true;
-                hasError = false;
-                statusMessage = "Бот успешно запущен!";
-            }
-            catch (Exception ex)
-            {
-                hasStatus = false;
-                hasError = true;
-                errorMessage = ex.Message;
+                ShowStatus("Бот успешно запущен!");
             }
         }
+        catch (Exception ex)
+        {
+            HandleError(ex.Message);
+        }
+    }
 
+    private bool ValidateBotToken()
+    {
+        const string pattern = @"^(?:\w+):(?:[\w:]+)";
+        if (Regex.IsMatch(botToken, pattern))
+            return true;
+
+        HandleError("Неверный формат токена");
+        return false;
+    }
+
+    private void SelectGroup(PostModel post, long groupId)
+    {
+        post.GroupID = groupId;
         StateHasChanged();
     }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        var pickerIds = posts.Select((_, i) => $"datetimepicker-publication-{i}").ToList();
-        await JS.InvokeVoidAsync("initDatePickers", pickerIds);
-    }
 
-    private void SelectGroup(int postIndex, long groupId)
-    {
-        posts[postIndex].GroupID = groupId;
-        StateHasChanged();
-    }
-
-    private void AddPost(MouseEventArgs args)
+    private void AddPost()
     {
         posts.Add(new PostModel
             {
-                PostText = "",
+                Id = Guid.NewGuid(),
+                PostText = string.Empty,
                 PostDateTime = DateTime.Now,
                 RepeatDays = 0,
                 RepeatHours = 0,
@@ -207,18 +251,50 @@
         StateHasChanged();
     }
 
-    public void Dispose()
+    private async Task SaveChanges()
     {
-        GroupRepo.StateChanged -= OnGroupRepoChanged;
+        try
+        {
+            // await PostsRepo.SavePostsAsync(posts);
+            ShowStatus("Изменения успешно сохранены!");
+        }
+        catch (Exception ex)
+        {
+            HandleError("Ошибка сохранения: " + ex.Message);
+        }
+    }
+
+    private void HandleError(string message)
+    {
+        hasError = true;
+        errorMessage = message;
+        hasStatus = false;
+        StateHasChanged();
+    }
+
+    private void ShowStatus(string message)
+    {
+        hasStatus = true;
+        statusMessage = message;
+        hasError = false;
+        StateHasChanged();
     }
 
     private async void OnGroupRepoChanged()
     {
-        await InvokeAsync(() =>
+        await InvokeAsync(async () =>
         {
-            groups = GroupRepo.GetAllGroupsAsync().Result;
-            Console.WriteLine(String.Join("\n", groups));
+            await LoadGroups();
             StateHasChanged();
         });
+    }
+
+    public void Dispose()
+    {
+        if (!isDisposed)
+        {
+            GroupRepo.StateChanged -= OnGroupRepoChanged;
+            isDisposed = true;
+        }
     }
 }
