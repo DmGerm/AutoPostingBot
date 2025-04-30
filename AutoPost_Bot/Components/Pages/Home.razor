@@ -16,133 +16,135 @@
 
 
 <h1>Настройка бота</h1>
-<div class="main_container">
-    <div class="input-group mb-3">
-        <button class="btn btn-outline-secondary"
-                type="button"
-                id="button-addon1"
-                @onclick="ToggleBot">
-            @(BotService.IsBotActive() ? "Остановить бота" : "Запустить бота")
-        </button>
-        <input type="text"
-               class="form-control @(hasError ? "is-invalid" : "")"
-               placeholder="Введите токен бота"
-               aria-label="Bot Token input form"
-               aria-describedby="button-addon1"
-               @bind="botToken" />
-    </div>
+<div class="row">
+    <div class="col-md-6 col-12 ">
+        <div class="input-group mb-3">
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    id="button-addon1"
+                    @onclick="ToggleBot">
+                @(BotService.IsBotActive() ? "Остановить бота" : "Запустить бота")
+            </button>
+            <input type="text"
+                   class="form-control @(hasError ? "is-invalid" : "")"
+                   placeholder="Введите токен бота"
+                   aria-label="Bot Token input form"
+                   aria-describedby="button-addon1"
+                   @bind="botToken" />
+        </div>
 
-    @if (hasError)
-    {
-        <div class="text-danger mb-3">Ошибка: @errorMessage</div>
-    }
-    @if (hasStatus)
-    {
-        <div class="text-success mb-3">@statusMessage</div>
-    }
-
-    <div class="post_container">
-        <h1>Настройка авто-постинга</h1>
-
-        @if (!posts.Any())
+        @if (hasError)
         {
-            <p>Постов для публикации еще нет</p>
+            <div class="text-danger mb-3">Ошибка: @errorMessage</div>
         }
-        else
+        @if (hasStatus)
         {
-            <p>Постов для публикации: @posts.Count</p>
+            <div class="text-success mb-3">@statusMessage</div>
         }
 
-        @foreach (var post in posts)
-        {
-            <div class="post-item mb-4" @key="post.Id">
-                <div class="dropdown mb-3">
-                    <button class="btn btn-outline-secondary dropdown-toggle"
-                            type="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                        @GetGroupName(post.GroupID)
-                    </button>
-                    <ul class="dropdown-menu">
-                        @foreach (var group in groups)
-                        {
-                            <li>
-                                <a class="dropdown-item"
-                                   href="#"
-                                   @onclick="(() => SelectGroup(post, group.Key))">
-                                    @group.Value
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                </div>
+        <div class="post_container">
+            <h1>Настройка авто-постинга</h1>
 
-                <div class="form-floating mb-3">
-                    <textarea class="form-control post-textarea"
-                              @bind="post.PostText"
-                              placeholder="Введите текст поста"></textarea>
-                    <label>Текст поста</label>
-                </div>
+            @if (!posts.Any())
+            {
+                <p>Постов для публикации еще нет</p>
+            }
+            else
+            {
+                <p>Постов для публикации: @posts.Count</p>
+            }
 
-                <div class="form-floating mb-3">
-                    <input type="datetime-local" class="form-control"
-                           id="datetimeInput"
-                           @bind="post.PostDateTime"
-                           @bind:format="yyyy-MM-ddTHH:mm" />
-                    <label for="datetimeInput">Дата и время публикации</label>
-                </div>
+            @foreach (var post in posts)
+            {
+                <div class="post-item mb-4" @key="post.Id">
+                    <div class="dropdown mb-3">
+                        <button class="btn btn-outline-secondary dropdown-toggle"
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                            @GetGroupName(post.GroupID)
+                        </button>
+                        <ul class="dropdown-menu">
+                            @foreach (var group in groups)
+                            {
+                                <li>
+                                    <a class="dropdown-item"
+                                       href="#"
+                                       @onclick="(() => SelectGroup(post, group.Key))">
+                                        @group.Value
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
 
-                <div class="input-group d-flex flex-column">
-                    <label class="form-label">Выберите частоту повторения</label>
-                    <div class="d-flex gap-3 mb-3">
-                        <div class="form-floating">
-                            <input type="number"
-                                   class="form-control"
-                                   id="repeatDays"
-                                   placeholder="0"
-                                   min="0"
-                                   @bind="post.RepeatDays" />
-                            <label for="repeatDays">Дней</label>
-                        </div>
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control post-textarea"
+                                  @bind="post.PostText"
+                                  placeholder="Введите текст поста"></textarea>
+                        <label>Текст поста</label>
+                    </div>
 
-                        <div class="form-floating">
-                            <input type="number"
-                                   class="form-control"
-                                   id="repeatHours"
-                                   placeholder="0"
-                                   min="0"
-                                   max="23"
-                                   @bind="post.RepeatHours" />
-                            <label for="repeatHours">Часов</label>
-                        </div>
+                    <div class="form-floating mb-3">
+                        <input type="datetime-local" class="form-control"
+                               id="datetimeInput"
+                               @bind="post.PostDateTime"
+                               @bind:format="yyyy-MM-ddTHH:mm" />
+                        <label for="datetimeInput">Дата и время публикации</label>
+                    </div>
 
-                        <div class="form-floating">
-                            <input type="number"
-                                   class="form-control"
-                                   id="repeatMinutes"
-                                   placeholder="0"
-                                   min="0"
-                                   max="59"
-                                   @bind="post.RepeatMinutes" />
-                            <label for="repeatMinutes">Минут</label>
+                    <div class="input-group d-flex flex-column">
+                        <label class="form-label">Выберите частоту повторения</label>
+                        <div class="d-flex gap-3 mb-3">
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="repeatDays"
+                                       placeholder="0"
+                                       min="0"
+                                       @bind="post.RepeatDays" />
+                                <label for="repeatDays">Дней</label>
+                            </div>
+
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="repeatHours"
+                                       placeholder="0"
+                                       min="0"
+                                       max="23"
+                                       @bind="post.RepeatHours" />
+                                <label for="repeatHours">Часов</label>
+                            </div>
+
+                            <div class="form-floating">
+                                <input type="number"
+                                       class="form-control"
+                                       id="repeatMinutes"
+                                       placeholder="0"
+                                       min="0"
+                                       max="59"
+                                       @bind="post.RepeatMinutes" />
+                                <label for="repeatMinutes">Минут</label>
+                            </div>
                         </div>
                     </div>
                 </div>
+            }
+
+            <div class="d-flex gap-3">
+                <button type="button"
+                        class="btn btn-primary"
+                        @onclick="SaveChanges">
+                    Сохранить изменения
+                </button>
+
+                <button type="button"
+                        class="btn btn-success"
+                        @onclick="AddPost">
+                    Добавить пост
+                </button>
             </div>
-        }
-
-        <div class="d-flex gap-3">
-            <button type="button"
-                    class="btn btn-primary"
-                    @onclick="SaveChanges">
-                Сохранить изменения
-            </button>
-
-            <button type="button"
-                    class="btn btn-success"
-                    @onclick="AddPost">
-                Добавить пост
-            </button>
         </div>
     </div>
 </div>
