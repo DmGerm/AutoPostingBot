@@ -4,13 +4,13 @@ namespace AutoPost_Bot.PostsRepository
 {
     public class PostsRepo : IPostsRepo
     {
-        private readonly List<PostModel> _posts = [];
+        private List<PostModel> posts = [];
 
         public Task<PostModel?> AddPostAsync(PostModel post)
         {
             try
             {
-                _posts.Add(post);
+                posts.Add(post);
                 return Task.FromResult<PostModel?>(post);
             }
             catch (Exception ex)
@@ -27,6 +27,19 @@ namespace AutoPost_Bot.PostsRepository
 
         public Task<PostModel?> GetPostByIdAsync(Guid id) { throw new NotImplementedException(); }
 
-        public Task<List<PostModel>> GetPostsAsync() => Task.FromResult(_posts);
+        public Task<List<PostModel>> GetPostsAsync() => Task.FromResult(posts);
+
+        public Task SavePostChangesAsync(List<PostModel> postsList)
+        {
+            try
+            {
+                posts = postsList;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            return Task.CompletedTask;
+        }
     }
 }

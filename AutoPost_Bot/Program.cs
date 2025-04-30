@@ -2,8 +2,10 @@
 using Autofac.Extensions.DependencyInjection;
 using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
+using AutoPost_Bot.Data;
 using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.TelegramGroupsRepo;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot
 {
@@ -26,6 +28,16 @@ namespace AutoPost_Bot
                             cb.RegisterType<GroupRepo>()
                             .As<IGroupRepo>().SingleInstance();
 
+
+                            var postConnectionString = "Data Source=/data/posts.db;Cache=Shared;Mode=ReadWriteCreate;Foreign Keys=True;Pooling=True";
+
+                            cb.Register(c =>
+                            {
+                                var optionBuilder = new DbContextOptionsBuilder<PostsContext>();
+                                optionBuilder.UseSqlite(postConnectionString)
+                                             .UseLazyLoadingProxies();
+                                return new PostsContext(optionBuilder.Options);
+                            }).InstancePerDependency();
                         });
 
             // Add services to the container.
