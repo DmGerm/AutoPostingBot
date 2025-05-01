@@ -2,7 +2,7 @@
 {
     public class PostModel
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string? PostText { get; set; }
         public long GroupID { get; set; }
         public DateTime PostDateTime { get; set; }
