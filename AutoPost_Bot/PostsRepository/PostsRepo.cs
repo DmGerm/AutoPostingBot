@@ -1,22 +1,31 @@
-﻿using AutoPost_Bot.Models;
+﻿using AutoPost_Bot.Data;
+using AutoPost_Bot.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot.PostsRepository
 {
     public class PostsRepo : IPostsRepo
     {
-        private List<PostModel> posts = [];
+        private List<PostModel> posts = new List<PostModel>(); // Fixed IDE0305: Simplified collection initialization
+        private readonly PostsContext _postsContext;
 
-        public Task<PostModel?> AddPostAsync(PostModel post)
+        public PostsRepo(PostsContext postsContext)
+        {
+            _postsContext = postsContext;
+        }
+
+        public async Task<PostModel?> AddPostAsync(PostModel post)
         {
             try
             {
-                posts.Add(post);
-                return Task.FromResult<PostModel?>(post);
+                _postsContext.Posts.Add(post);
+                await _postsContext.SaveChangesAsync();
+                return post;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return Task.FromResult<PostModel?>(null);
+                return null;
             }
         }
 
@@ -25,21 +34,26 @@ namespace AutoPost_Bot.PostsRepository
             throw new NotImplementedException();
         }
 
-        public Task<PostModel?> GetPostByIdAsync(Guid id) { throw new NotImplementedException(); }
+        public async Task<PostModel?> GetPostByIdAsync(Guid id)
+        {
+            return await _postsContext.Posts
+                                      .FirstOrDefaultAsync(post => post.Id == id);
+        }
 
-        public Task<List<PostModel>> GetPostsAsync() => Task.FromResult(posts);
+        public async Task<List<PostModel>> GetPostsAsync() => await _postsContext.Posts.ToListAsync();
 
-        public Task SavePostChangesAsync(List<PostModel> postsList)
+
+        public async Task SavePostChangesAsync(List<PostModel> postsList)
         {
             try
             {
-                posts = postsList;
+                _postsContext.Posts.UpdateRange(postsList);
+                await _postsContext.SaveChangesAsync();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
-            return Task.CompletedTask;
         }
     }
 }

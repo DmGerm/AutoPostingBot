@@ -28,8 +28,10 @@ namespace AutoPost_Bot
                             cb.RegisterType<GroupRepo>()
                             .As<IGroupRepo>().SingleInstance();
 
-
-                            var postConnectionString = "Data Source=/data/posts.db;Cache=Shared;Mode=ReadWriteCreate;Foreign Keys=True;Pooling=True";
+                            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
+                            var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+                            var postsFilePath = Path.Combine(dataDir, "posts.db");
+                            var postConnectionString = $"Data Source={postsFilePath};Cache=Shared;Mode=ReadWriteCreate;Foreign Keys=True;Pooling=True";
 
                             cb.Register(c =>
                             {
