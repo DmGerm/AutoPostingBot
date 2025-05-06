@@ -6,7 +6,6 @@ namespace AutoPost_Bot.PostsRepository
 {
     public class PostsRepo : IPostsRepo
     {
-        private List<PostModel> posts = new List<PostModel>(); // Fixed IDE0305: Simplified collection initialization
         private readonly PostsContext _postsContext;
 
         public PostsRepo(PostsContext postsContext)
@@ -47,7 +46,10 @@ namespace AutoPost_Bot.PostsRepository
         {
             try
             {
-                _postsContext.Posts.UpdateRange(postsList);
+                _postsContext.ChangeTracker.Clear();
+                var existing = await _postsContext.Posts.ToListAsync();
+                _postsContext.Posts.RemoveRange(existing);
+                await _postsContext.AddRangeAsync(postsList);
                 await _postsContext.SaveChangesAsync();
             }
             catch (Exception ex)
