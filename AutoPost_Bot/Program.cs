@@ -4,6 +4,7 @@ using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
 using AutoPost_Bot.Data;
 using AutoPost_Bot.PostsRepository;
+using AutoPost_Bot.ScheduleService;
 using AutoPost_Bot.TelegramGroupsRepo;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,9 @@ namespace AutoPost_Bot
                             cb.RegisterType<BotService>()
                                 .As<IBotService>()
                                 .SingleInstance();
+
+                            cb.RegisterType<PostSchedulerService>()
+                              .SingleInstance();
 
                             cb.RegisterType<PostsRepo>()
                             .As<IPostsRepo>().SingleInstance();
@@ -45,6 +49,8 @@ namespace AutoPost_Bot
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             var app = builder.Build();
 

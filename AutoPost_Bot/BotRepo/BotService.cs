@@ -10,14 +10,14 @@ namespace AutoPost_Bot.BotRepo
     {
         private CancellationTokenSource? cts;
         private readonly UpdateHandler updateHandler = new(groupRepo);
-        private BotModel bot = new() { Id = new Guid()};
+        private readonly BotModel bot = new() { Id = new Guid() };
 
-        public Task<TelegramBotClient> GetBotClient()
+        public async Task<TelegramBotClient> GetBotClient()
         {
             if (bot.BotClient == null)
                 throw new InvalidOperationException("Bot has not been started yet.");
 
-            return Task.FromResult(bot.BotClient);
+            return await Task.FromResult(bot.BotClient);
         }
 
         public Task StopBot()
@@ -75,9 +75,14 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        async Task OnError(Exception exception, HandleErrorSource source)
+        private Task OnError(Exception exception, HandleErrorSource source)
         {
-            Console.WriteLine(exception);
+            return Task.Run(() =>
+            {
+                Console.WriteLine($"Error Source: {source}");
+                Console.WriteLine($"Exception: {exception.Message}");
+                Console.WriteLine(exception.StackTrace);
+            });
         }
 
         public bool IsBotActive() => bot.IsActive;

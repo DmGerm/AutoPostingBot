@@ -9,5 +9,6 @@ namespace AutoPost_Bot.PostsRepository
         public Task<PostModel?> ChangePostByIdAsync(Guid id, PostModel post);
         public Task<PostModel?> AddPostAsync(PostModel post);
         public Task SavePostChangesAsync(List<PostModel> postsList);
+        public Task UpdatePostAsync(PostModel post);
     }
 }

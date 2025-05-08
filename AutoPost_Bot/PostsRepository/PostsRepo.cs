@@ -1,17 +1,14 @@
-﻿using AutoPost_Bot.Data;
+﻿using AutoMapper;
+using AutoPost_Bot.Data;
 using AutoPost_Bot.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot.PostsRepository
 {
-    public class PostsRepo : IPostsRepo
+    public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
     {
-        private readonly PostsContext _postsContext;
-
-        public PostsRepo(PostsContext postsContext)
-        {
-            _postsContext = postsContext;
-        }
+        private readonly PostsContext _postsContext = postsContext;
+        private readonly IMapper _mapper = mapper;
 
         public async Task<PostModel?> AddPostAsync(PostModel post)
         {
@@ -56,6 +53,18 @@ namespace AutoPost_Bot.PostsRepository
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        public async Task UpdatePostAsync(PostModel post)
+        {
+            var dbPost = await _postsContext.Posts.FindAsync(post.Id);
+
+            if (dbPost != null)
+            {
+                _mapper.Map(dbPost, post);
+            }
+
+            await _postsContext.SaveChangesAsync();
         }
     }
 }

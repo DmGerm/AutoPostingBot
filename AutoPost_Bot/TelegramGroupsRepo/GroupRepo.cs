@@ -2,7 +2,7 @@
 {
     public class GroupRepo : IGroupRepo
     {
-        private Dictionary<long, string> groups = [];
+        private readonly Dictionary<long, string> groups = [];
         public event Action? StateChanged;
 
         public void AddGroup(long groupId, string groupName)
@@ -24,14 +24,17 @@
 
         public Task<Dictionary<long, string>> GetAllGroupsAsync() => Task.FromResult(groups);
 
-        public Task<string> RemoveGroupAsync(string groupName)
+        public async Task<long> RemoveGroupAsync(long groupId)
         {
-            throw new NotImplementedException();
+            if (!groups.Remove(groupId))
+                throw new Exception("Group with this id, not found in db.");
+
+            return await Task.FromResult(groupId);
         }
 
         private void OnStateChanged()
         {
-            StateChanged?.Invoke(); 
+            StateChanged?.Invoke();
         }
 
     }

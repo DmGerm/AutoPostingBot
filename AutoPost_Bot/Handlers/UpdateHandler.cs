@@ -25,7 +25,7 @@ namespace AutoPost_Bot.Handlers
 
                     try
                     {
-                        _groupRepo.AddGroup(update.MyChatMember.Chat.Id, update.MyChatMember.Chat.Title);
+                        await Task.Run(() => _groupRepo.AddGroup(update.MyChatMember.Chat.Id, update.MyChatMember.Chat.Title));
                     }
                     catch (Exception ex)
                     {
@@ -39,6 +39,14 @@ namespace AutoPost_Bot.Handlers
                 {
                     if (update.MyChatMember.Chat.Type is ChatType.Private)
                         return;
+                    try
+                    {
+                        await Task.Run(() => _groupRepo.RemoveGroupAsync(update.MyChatMember.Chat.Id));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
 
                     Console.WriteLine($"Бот был удалён из чата: {update.MyChatMember.Chat.Title}");
                 }
