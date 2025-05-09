@@ -1,18 +1,30 @@
-﻿namespace AutoPost_Bot.TelegramGroupsRepo
+﻿using AutoPost_Bot.Data;
+using AutoPost_Bot.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace AutoPost_Bot.TelegramGroupsRepo
 {
-    public class GroupRepo : IGroupRepo
+    public class GroupRepo(PostsContext dbContext) : IGroupRepo
     {
-        private readonly Dictionary<long, string> groups = [];
         public event Action? StateChanged;
+        private readonly PostsContext _dbContext = dbContext;
 
-        public void AddGroup(long groupId, string groupName)
+        public async Task AddGroup(long groupId, string groupName)
         {
-            if (groups.ContainsKey(groupId))
-            {
+            if (await _dbContext.Groups.FirstOrDefaultAsync(group => group.GroupId == groupId) != null)
                 throw new Exception("Group with same id already added, please check.");
-            }
 
-            groups.Add(groupId, groupName);
+
+            try
+            {
+                await _dbContext.Groups.AddAsync(new GroupModel() { GroupId = groupId, Name = groupName });
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Problem with group saving, {ex.Message}");
+                Console.WriteLine($"Inner: {ex.InnerException?.Message}");
+            }
 
             OnStateChanged();
         }
@@ -22,14 +34,29 @@
             throw new NotImplementedException();
         }
 
-        public Task<Dictionary<long, string>> GetAllGroupsAsync() => Task.FromResult(groups);
+        public async Task<Dictionary<long, string>> GetAllGroupsAsync()
+        {
+            try
+            {
+                return await _dbContext.Groups
+                             .ToDictionaryAsync(group => group.GroupId, group => group.Name);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
+        }
 
         public async Task<long> RemoveGroupAsync(long groupId)
         {
-            if (!groups.Remove(groupId))
-                throw new Exception("Group with this id, not found in db.");
+            var group = await _dbContext.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId)
+                        ?? throw new Exception("Group with this id not found in db.");
 
-            return await Task.FromResult(groupId);
+            _dbContext.Groups.Remove(group);
+            await _dbContext.SaveChangesAsync();
+
+            return group.GroupId;
         }
 
         private void OnStateChanged()

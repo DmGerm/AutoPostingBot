@@ -131,7 +131,7 @@
             <div class="d-flex gap-3">
                 <button type="button"
                 class="btn btn-primary"
-                @onclick="SaveChanges">
+                        @onclick="() => SaveChanges(true)">
                     Сохранить изменения
                 </button>
 
@@ -176,6 +176,12 @@
         {
             var groupsResult = await GroupRepo.GetAllGroupsAsync();
             groups = groupsResult?.ToDictionary(g => g.Key, g => g.Value) ?? new();
+
+            posts.Where(post => !(post.GroupID is long groupId && groups.ContainsKey(groupId)))
+                                 .ToList()
+                                 .ForEach(post => post.GroupID = null);
+
+            await SaveChanges(false);
         }
         catch (Exception ex)
         {
@@ -183,10 +189,12 @@
         }
     }
 
-    private string GetGroupName(long groupId)
+    private string GetGroupName(long? groupId)
     {
-        if (groupId == 0) return "Выберите канал или группу";
-        return groups.TryGetValue(groupId, out var name)
+        if (groupId == null || groupId == 0)
+            return "Выберите канал или группу";
+
+        return groups.TryGetValue(groupId.Value, out var name)
             ? name
             : "Группа не найдена";
     }
@@ -249,12 +257,14 @@
         StateHasChanged();
     }
 
-    private async Task SaveChanges()
+    private async Task SaveChanges(bool isNotificationOn)
     {
         try
         {
             await PostsRepo.SavePostChangesAsync(posts);
-            ShowStatus("Изменения успешно сохранены!");
+
+            if (isNotificationOn)
+                ShowStatus("Изменения успешно сохранены!");
         }
         catch (Exception ex)
         {

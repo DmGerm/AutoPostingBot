@@ -51,7 +51,8 @@ namespace AutoPost_Bot.PostsRepository
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine("Ошибка при сохранении: " + ex.Message);
+                Console.WriteLine("InnerException: " + ex.InnerException?.Message);
             }
         }
 
@@ -63,8 +64,14 @@ namespace AutoPost_Bot.PostsRepository
             {
                 _mapper.Map(dbPost, post);
             }
-
-            await _postsContext.SaveChangesAsync();
+            try
+            {
+                await _postsContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

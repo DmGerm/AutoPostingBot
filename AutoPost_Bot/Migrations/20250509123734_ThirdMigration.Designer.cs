@@ -3,6 +3,7 @@ using System;
 using AutoPost_Bot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoPost_Bot.Migrations
 {
     [DbContext(typeof(PostsContext))]
-    partial class PostsContextModelSnapshot : ModelSnapshot
+    [Migration("20250509123734_ThirdMigration")]
+    partial class ThirdMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,6 +27,7 @@ namespace AutoPost_Bot.Migrations
             modelBuilder.Entity("AutoPost_Bot.Models.GroupModel", b =>
                 {
                     b.Property<long>("GroupId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -41,7 +45,7 @@ namespace AutoPost_Bot.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<long?>("GroupID")
+                    b.Property<long>("GroupID")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("PostDateTime")
@@ -75,7 +79,8 @@ namespace AutoPost_Bot.Migrations
                     b.HasOne("AutoPost_Bot.Models.GroupModel", "Group")
                         .WithMany("Posts")
                         .HasForeignKey("GroupID")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Group");
                 });

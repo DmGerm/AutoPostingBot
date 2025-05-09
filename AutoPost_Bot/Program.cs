@@ -23,9 +23,6 @@ namespace AutoPost_Bot
                                 .As<IBotService>()
                                 .SingleInstance();
 
-                            cb.RegisterType<PostSchedulerService>()
-                              .SingleInstance();
-
                             cb.RegisterType<PostsRepo>()
                             .As<IPostsRepo>().SingleInstance();
 
@@ -45,6 +42,8 @@ namespace AutoPost_Bot
                                 return new PostsContext(optionBuilder.Options);
                             }).InstancePerDependency();
                         });
+
+            builder.Services.AddHostedService<PostSchedulerService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()

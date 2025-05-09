@@ -3,6 +3,7 @@ using System;
 using AutoPost_Bot.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoPost_Bot.Migrations
 {
     [DbContext(typeof(PostsContext))]
-    partial class PostsContextModelSnapshot : ModelSnapshot
+    [Migration("20250509132213_MakeGroupNullableInPost")]
+    partial class MakeGroupNullableInPost
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -75,7 +78,7 @@ namespace AutoPost_Bot.Migrations
                     b.HasOne("AutoPost_Bot.Models.GroupModel", "Group")
                         .WithMany("Posts")
                         .HasForeignKey("GroupID")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Group");
                 });
