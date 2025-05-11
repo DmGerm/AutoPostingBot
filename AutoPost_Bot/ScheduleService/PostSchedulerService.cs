@@ -8,13 +8,12 @@ namespace AutoPost_Bot.ScheduleService
 {
     public class PostSchedulerService(IServiceProvider serviceProvider) : BackgroundService
     {
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                using var scope = _serviceProvider.CreateScope();
+                using var scope = serviceProvider.CreateScope();
                 var postRepo = scope.ServiceProvider.GetRequiredService<IPostsRepo>();
                 var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
                 var groupRepo = scope.ServiceProvider.GetRequiredService<IGroupRepo>();
@@ -60,7 +59,7 @@ namespace AutoPost_Bot.ScheduleService
                                 {
                                     if (ex.ErrorCode == 404)
                                     {
-                                        Console.WriteLine($"Группа с ID {post.GroupID} не найдена. Удаление группы из всех постов.");
+                                        Console.WriteLine($"Группа с ID {post.GroupID} не найдена. Удаление группы из БД.");
                                         await groupRepo.RemoveGroupAsync(post.GroupID.Value);
                                     }
                                     else

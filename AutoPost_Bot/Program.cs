@@ -34,7 +34,7 @@ namespace AutoPost_Bot
                             var postsFilePath = Path.Combine(dataDir, "posts.db");
                             var postConnectionString = $"Data Source={postsFilePath};Cache=Shared;Mode=ReadWriteCreate;Foreign Keys=True;Pooling=True";
 
-                            cb.Register(c =>
+                            cb.Register(_ =>
                             {
                                 var optionBuilder = new DbContextOptionsBuilder<PostsContext>();
                                 optionBuilder.UseSqlite(postConnectionString)
@@ -61,7 +61,7 @@ namespace AutoPost_Bot
                 app.UseHsts();
             }
 
-            TaskScheduler.UnobservedTaskException += (sender, e) =>
+            TaskScheduler.UnobservedTaskException += (_, e) =>
             {
                 Console.WriteLine($"🔥 Unobserved task exception: {e.Exception.Message}");
                 e.SetObserved();

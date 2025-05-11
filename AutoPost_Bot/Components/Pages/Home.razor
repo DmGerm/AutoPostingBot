@@ -1,15 +1,13 @@
 ﻿@page "/"
-@using AutoPost_Bot.BotRepo
+@rendermode InteractiveServer
+@inject IBotService BotService
+@inject IPostsRepo PostsRepo
+@inject IGroupRepo GroupRepo
 @using System.Text.RegularExpressions
+@using AutoPost_Bot.BotRepo
 @using AutoPost_Bot.Models
 @using AutoPost_Bot.PostsRepository
 @using AutoPost_Bot.TelegramGroupsRepo
-@using System.Globalization
-@rendermode InteractiveServer
-@inject IBotService BotService
-@inject IJSRuntime JS
-@inject IPostsRepo PostsRepo
-@inject IGroupRepo GroupRepo
 @implements IDisposable
 
 <PageTitle>Home</PageTitle>
@@ -19,57 +17,57 @@
     <div class="col-md-5 col-12 ">
         <div class="input-group mb-3">
             <button class="btn btn-outline-secondary"
-            type="button"
-            id="button-addon1"
-            @onclick="ToggleBot">
+                    type="button"
+                    id="button-addon1"
+                    @onclick="ToggleBot">
                 @(BotService.IsBotActive() ? "Остановить бота" : "Запустить бота")
             </button>
             <input type="text"
-            class="form-control @(hasError ? "is-invalid" : "")"
-            placeholder="Введите токен бота"
-            aria-label="Bot Token input form"
-            aria-describedby="button-addon1"
-            @bind="botToken" />
+                   class="form-control @(_hasError ? "is-invalid" : "")"
+                   placeholder="Введите токен бота"
+                   aria-label="Bot Token input form"
+                   aria-describedby="button-addon1"
+                   @bind="_botToken"/>
         </div>
 
-        @if (hasError)
+        @if (_hasError)
         {
-            <div class="text-danger mb-3">Ошибка: @errorMessage</div>
+            <div class="text-danger mb-3">Ошибка: @_errorMessage</div>
         }
-        @if (hasStatus)
+        @if (_hasStatus)
         {
-            <div class="text-success mb-3">@statusMessage</div>
+            <div class="text-success mb-3">@_statusMessage</div>
         }
 
         <div class="post_container">
             <h1>Настройка авто-постинга</h1>
 
-            @if (!posts.Any())
+            @if (!_posts.Any())
             {
                 <p>Постов для публикации еще нет</p>
             }
             else
             {
-                <p>Постов для публикации: @posts.Count</p>
+                <p>Постов для публикации: @_posts.Count</p>
             }
 
-            @foreach (var post in posts)
+            @foreach (var post in _posts)
             {
                 <div class="post-item mb-4" @key="post.Id">
                     <div class="dropdown mb-3">
                         <button class="btn btn-outline-secondary dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false">
+                                type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
                             @GetGroupName(post.GroupID)
                         </button>
                         <ul class="dropdown-menu">
-                            @foreach (var group in groups)
+                            @foreach (var group in _groups)
                             {
                                 <li>
                                     <a class="dropdown-item"
-                                    href="#"
-                                    @onclick="(() => SelectGroup(post, group.Key))">
+                                       href="#"
+                                       @onclick="() => SelectGroup(post, group.Key)">
                                         @group.Value
                                     </a>
                                 </li>
@@ -79,15 +77,15 @@
 
                     <div class="form-floating mb-3">
                         <textarea class="form-control post-textarea"
-                        @bind="post.PostText"
-                        placeholder="Введите текст поста"></textarea>
+                                  @bind="post.PostText"
+                                  placeholder="Введите текст поста"></textarea>
                         <label>Текст поста</label>
                     </div>
 
                     <div class="form-floating mb-3">
                         <input type="datetime-local" class="form-control"
-                        id="datetimeInput"
-                        @bind="post.PostDateTime" />
+                               id="datetimeInput"
+                               @bind="post.PostDateTime"/>
                         <label for="datetimeInput">Дата и время публикации</label>
                     </div>
 
@@ -96,31 +94,31 @@
                         <div class="input-group d-flex gap-3 mb-3 mt-0">
                             <div class="form-floating">
                                 <input type="number"
-                                class="form-control"
-                                id="repeatDays"
-                                placeholder="0"
-                                min="0"
-                                @bind="post.RepeatDays" />
+                                       class="form-control"
+                                       id="repeatDays"
+                                       placeholder="0"
+                                       min="0"
+                                       @bind="post.RepeatDays"/>
                                 <label for="repeatDays">Дней</label>
                             </div>
                             <div class="form-floating">
                                 <input type="number"
-                                class="form-control"
-                                id="repeatHours"
-                                placeholder="0"
-                                min="0"
-                                max="23"
-                                @bind="post.RepeatHours" />
+                                       class="form-control"
+                                       id="repeatHours"
+                                       placeholder="0"
+                                       min="0"
+                                       max="23"
+                                       @bind="post.RepeatHours"/>
                                 <label for="repeatHours">Часов</label>
                             </div>
                             <div class="form-floating">
                                 <input type="number"
-                                class="form-control"
-                                id="repeatMinutes"
-                                placeholder="0"
-                                min="0"
-                                max="59"
-                                @bind="post.RepeatMinutes" />
+                                       class="form-control"
+                                       id="repeatMinutes"
+                                       placeholder="0"
+                                       min="0"
+                                       max="59"
+                                       @bind="post.RepeatMinutes"/>
                                 <label for="repeatMinutes">Минут</label>
                             </div>
                         </div>
@@ -130,14 +128,14 @@
 
             <div class="d-flex gap-3">
                 <button type="button"
-                class="btn btn-primary"
+                        class="btn btn-primary"
                         @onclick="() => SaveChanges(true)">
                     Сохранить изменения
                 </button>
 
                 <button type="button"
-                class="btn btn-success"
-                @onclick="AddPost">
+                        class="btn btn-success"
+                        @onclick="AddPost">
                     Добавить пост
                 </button>
             </div>
@@ -146,23 +144,26 @@
 </div>
 
 @code {
-    private string botToken = string.Empty;
-    private bool hasError;
-    private bool hasStatus;
-    private string errorMessage = string.Empty;
-    private string statusMessage = string.Empty;
-    private List<PostModel> posts = new();
-    private Dictionary<long, string> groups = new();
-    private bool isDisposed;
+    private Action? _groupRepoChangedHandler;
+    private string _botToken = string.Empty;
+    private bool _hasError;
+    private bool _hasStatus;
+    private string _errorMessage = string.Empty;
+    private string _statusMessage = string.Empty;
+    private List<PostModel> _posts = [];
+    private Dictionary<long, string> _groups = new();
+    private bool _isDisposed;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            posts = await PostsRepo.GetPostsAsync() ?? new List<PostModel>();
-            botToken = BotService.GetBotToken();
+            _posts = await PostsRepo.GetPostsAsync();
+            _botToken = BotService.GetBotToken();
             await LoadGroups();
-            GroupRepo.StateChanged += OnGroupRepoChanged;
+
+            _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
+            GroupRepo.StateChanged += _groupRepoChangedHandler;
         }
         catch (Exception ex)
         {
@@ -175,11 +176,11 @@
         try
         {
             var groupsResult = await GroupRepo.GetAllGroupsAsync();
-            groups = groupsResult?.ToDictionary(g => g.Key, g => g.Value) ?? new();
+            _groups = groupsResult.ToDictionary(g => g.Key, g => g.Value);
 
-            posts.Where(post => !(post.GroupID is long groupId && groups.ContainsKey(groupId)))
-                                 .ToList()
-                                 .ForEach(post => post.GroupID = null);
+            _posts.Where(post => !(post.GroupID is {} groupId && _groups.ContainsKey(groupId)))
+                .ToList()
+                .ForEach(post => post.GroupID = null);
 
             await SaveChanges(false);
         }
@@ -194,15 +195,15 @@
         if (groupId == null || groupId == 0)
             return "Выберите канал или группу";
 
-        return groups.TryGetValue(groupId.Value, out var name)
+        return _groups.TryGetValue(groupId.Value, out var name)
             ? name
             : "Группа не найдена";
     }
 
     private async Task ToggleBot()
     {
-        hasError = false;
-        hasStatus = false;
+        _hasError = false;
+        _hasStatus = false;
 
         try
         {
@@ -216,7 +217,7 @@
                 if (!ValidateBotToken())
                     return;
 
-                await BotService.StartBot(botToken);
+                await BotService.StartBot(_botToken);
                 ShowStatus("Бот успешно запущен!");
             }
         }
@@ -229,7 +230,7 @@
     private bool ValidateBotToken()
     {
         const string pattern = @"^(?:\w+):(?:[\w:]+)";
-        if (Regex.IsMatch(botToken, pattern))
+        if (Regex.IsMatch(_botToken, pattern))
             return true;
 
         HandleError("Неверный формат токена");
@@ -244,7 +245,7 @@
 
     private void AddPost()
     {
-        posts.Add(new PostModel
+        _posts.Add(new PostModel
             {
                 Id = Guid.NewGuid(),
                 PostText = string.Empty,
@@ -261,7 +262,7 @@
     {
         try
         {
-            await PostsRepo.SavePostChangesAsync(posts);
+            await PostsRepo.SavePostChangesAsync(_posts);
 
             if (isNotificationOn)
                 ShowStatus("Изменения успешно сохранены!");
@@ -274,35 +275,41 @@
 
     private void HandleError(string message)
     {
-        hasError = true;
-        errorMessage = message;
-        hasStatus = false;
+        _hasError = true;
+        _errorMessage = message;
+        _hasStatus = false;
         StateHasChanged();
     }
 
     private void ShowStatus(string message)
     {
-        hasStatus = true;
-        statusMessage = message;
-        hasError = false;
+        _hasStatus = true;
+        _statusMessage = message;
+        _hasError = false;
         StateHasChanged();
     }
 
-    private async void OnGroupRepoChanged()
+    private async Task OnGroupRepoChanged()
     {
-        await InvokeAsync(async () =>
+        try
         {
-            await LoadGroups();
-            StateHasChanged();
-        });
+            await InvokeAsync(async () => {
+                await LoadGroups();
+                StateHasChanged();
+            });
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ошибка в обработчике GroupRepo: {e.Message}");
+        }
     }
 
     public void Dispose()
     {
-        if (!isDisposed)
+        if (!_isDisposed && _groupRepoChangedHandler is not null)
         {
-            GroupRepo.StateChanged -= OnGroupRepoChanged;
-            isDisposed = true;
+            GroupRepo.StateChanged -= _groupRepoChangedHandler;
+            _isDisposed = true;
         }
     }
 }
