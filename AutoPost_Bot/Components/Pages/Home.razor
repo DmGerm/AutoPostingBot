@@ -38,108 +38,114 @@
         {
             <div class="text-success mb-3">@_statusMessage</div>
         }
+        @if (BotService.IsBotActive())
+        {
+            <div class="post_container">
+                <h1>Настройка авто-постинга</h1>
 
-        <div class="post_container">
-            <h1>Настройка авто-постинга</h1>
+                @if (!_posts.Any())
+                {
+                    <p>Постов для публикации еще нет</p>
+                }
+                else
+                {
+                    <p>Постов для публикации: @_posts.Count</p>
+                }
 
-            @if (!_posts.Any())
-            {
-                <p>Постов для публикации еще нет</p>
-            }
-            else
-            {
-                <p>Постов для публикации: @_posts.Count</p>
-            }
+                @foreach (var post in _posts)
+                {
+                    <div class="post-item mb-4" @key="post.Id">
+                        <div class="dropdown mb-3">
+                            <button class="btn btn-outline-secondary dropdown-toggle"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                @GetGroupName(post.GroupID)
+                            </button>
+                            <ul class="dropdown-menu">
+                                @foreach (var group in _groups)
+                                {
+                                    <li>
+                                        <a class="dropdown-item"
+                                           href="#"
+                                           @onclick="() => SelectGroup(post, group.Key)">
+                                            @group.Value
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
 
-            @foreach (var post in _posts)
-            {
-                <div class="post-item mb-4" @key="post.Id">
-                    <div class="dropdown mb-3">
-                        <button class="btn btn-outline-secondary dropdown-toggle"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                            @GetGroupName(post.GroupID)
-                        </button>
-                        <ul class="dropdown-menu">
-                            @foreach (var group in _groups)
-                            {
-                                <li>
-                                    <a class="dropdown-item"
-                                       href="#"
-                                       @onclick="() => SelectGroup(post, group.Key)">
-                                        @group.Value
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                    </div>
+                        <div class="form-floating mb-3">
+                            <textarea class="form-control post-textarea"
+                                      @bind="post.PostText"
+                                      placeholder="Введите текст поста"></textarea>
+                            <label>Текст поста</label>
+                        </div>
 
-                    <div class="form-floating mb-3">
-                        <textarea class="form-control post-textarea"
-                                  @bind="post.PostText"
-                                  placeholder="Введите текст поста"></textarea>
-                        <label>Текст поста</label>
-                    </div>
+                        <div class="form-floating mb-3">
+                            <input type="datetime-local" class="form-control"
+                                   id="datetimeInput"
+                                   @bind="post.PostDateTime"/>
+                            <label for="datetimeInput">Дата и время публикации</label>
+                        </div>
 
-                    <div class="form-floating mb-3">
-                        <input type="datetime-local" class="form-control"
-                               id="datetimeInput"
-                               @bind="post.PostDateTime"/>
-                        <label for="datetimeInput">Дата и время публикации</label>
-                    </div>
-
-                    <div class="d-flex flex-column">
-                        <label class="form-label mb-1">Выберите частоту повторения</label>
-                        <div class="input-group d-flex gap-3 mb-3 mt-0">
-                            <div class="form-floating">
-                                <input type="number"
-                                       class="form-control"
-                                       id="repeatDays"
-                                       placeholder="0"
-                                       min="0"
-                                       @bind="post.RepeatDays"/>
-                                <label for="repeatDays">Дней</label>
-                            </div>
-                            <div class="form-floating">
-                                <input type="number"
-                                       class="form-control"
-                                       id="repeatHours"
-                                       placeholder="0"
-                                       min="0"
-                                       max="23"
-                                       @bind="post.RepeatHours"/>
-                                <label for="repeatHours">Часов</label>
-                            </div>
-                            <div class="form-floating">
-                                <input type="number"
-                                       class="form-control"
-                                       id="repeatMinutes"
-                                       placeholder="0"
-                                       min="0"
-                                       max="59"
-                                       @bind="post.RepeatMinutes"/>
-                                <label for="repeatMinutes">Минут</label>
+                        <div class="d-flex flex-column">
+                            <label class="form-label mb-1">Выберите частоту повторения</label>
+                            <div class="input-group d-flex gap-3 mb-3 mt-0">
+                                <div class="form-floating">
+                                    <input type="number"
+                                           class="form-control"
+                                           id="repeatDays"
+                                           placeholder="0"
+                                           min="0"
+                                           @bind="post.RepeatDays"/>
+                                    <label for="repeatDays">Дней</label>
+                                </div>
+                                <div class="form-floating">
+                                    <input type="number"
+                                           class="form-control"
+                                           id="repeatHours"
+                                           placeholder="0"
+                                           min="0"
+                                           max="23"
+                                           @bind="post.RepeatHours"/>
+                                    <label for="repeatHours">Часов</label>
+                                </div>
+                                <div class="form-floating">
+                                    <input type="number"
+                                           class="form-control"
+                                           id="repeatMinutes"
+                                           placeholder="0"
+                                           min="0"
+                                           max="59"
+                                           @bind="post.RepeatMinutes"/>
+                                    <label for="repeatMinutes">Минут</label>
+                                </div>
                             </div>
                         </div>
                     </div>
+                }
+
+                <div class="d-flex gap-3">
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="() => SaveChanges(true)">
+                        Сохранить изменения
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-success"
+                            @onclick="AddPost">
+                        Добавить пост
+                    </button>
                 </div>
-            }
-
-            <div class="d-flex gap-3">
-                <button type="button"
-                        class="btn btn-primary"
-                        @onclick="() => SaveChanges(true)">
-                    Сохранить изменения
-                </button>
-
-                <button type="button"
-                        class="btn btn-success"
-                        @onclick="AddPost">
-                    Добавить пост
-                </button>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="text-bg-primary p-3">Для управления постами запустите бот</div>
+        }
     </div>
 </div>
 
@@ -158,7 +164,6 @@
     {
         try
         {
-            _posts = await PostsRepo.GetPostsAsync();
             _botToken = BotService.GetBotToken();
             await LoadGroups();
 
@@ -178,7 +183,7 @@
             var groupsResult = await GroupRepo.GetAllGroupsAsync();
             _groups = groupsResult.ToDictionary(g => g.Key, g => g.Value);
 
-            _posts.Where(post => !(post.GroupID is {} groupId && _groups.ContainsKey(groupId)))
+            _posts.Where(post => !(post.GroupID is { } groupId && _groups.ContainsKey(groupId)))
                 .ToList()
                 .ForEach(post => post.GroupID = null);
 
@@ -211,6 +216,7 @@
             {
                 await BotService.StopBot();
                 ShowStatus("Бот успешно остановлен!");
+                _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
             }
             else
             {
@@ -246,14 +252,15 @@
     private void AddPost()
     {
         _posts.Add(new PostModel
-            {
-                Id = Guid.NewGuid(),
-                PostText = string.Empty,
-                PostDateTime = DateTime.Now,
-                RepeatDays = 0,
-                RepeatHours = 0,
-                RepeatMinutes = 0
-            });
+        {
+            Id = Guid.NewGuid(),
+            PostText = string.Empty,
+            BotID = _botToken,
+            PostDateTime = DateTime.Now,
+            RepeatDays = 0,
+            RepeatHours = 0,
+            RepeatMinutes = 0
+        });
 
         StateHasChanged();
     }
@@ -293,7 +300,8 @@
     {
         try
         {
-            await InvokeAsync(async () => {
+            await InvokeAsync(async () =>
+            {
                 await LoadGroups();
                 StateHasChanged();
             });
@@ -312,4 +320,5 @@
             _isDisposed = true;
         }
     }
+
 }
