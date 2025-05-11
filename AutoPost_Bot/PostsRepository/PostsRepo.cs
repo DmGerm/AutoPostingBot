@@ -7,15 +7,12 @@ namespace AutoPost_Bot.PostsRepository;
 
 public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
 {
-    private readonly IMapper _mapper = mapper;
-    private readonly PostsContext _postsContext = postsContext;
-
     public async Task<PostModel?> AddPostAsync(PostModel post)
     {
         try
         {
-            _postsContext.Posts.Add(post);
-            await _postsContext.SaveChangesAsync();
+            postsContext.Posts.Add(post);
+            await postsContext.SaveChangesAsync();
             return post;
         }
         catch (Exception ex)
@@ -32,13 +29,13 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
 
     public async Task<PostModel?> GetPostByIdAsync(Guid id)
     {
-        return await _postsContext.Posts
+        return await postsContext.Posts
             .FirstOrDefaultAsync(post => post.Id == id);
     }
 
     public async Task<List<PostModel>> GetPostsAsync()
     {
-        return await _postsContext.Posts.ToListAsync();
+        return await postsContext.Posts.ToListAsync();
     }
 
 
@@ -46,11 +43,11 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
     {
         try
         {
-            _postsContext.ChangeTracker.Clear();
-            var existing = await _postsContext.Posts.ToListAsync();
-            _postsContext.Posts.RemoveRange(existing);
-            await _postsContext.AddRangeAsync(postsList);
-            await _postsContext.SaveChangesAsync();
+            postsContext.ChangeTracker.Clear();
+            var existing = await postsContext.Posts.ToListAsync();
+            postsContext.Posts.RemoveRange(existing);
+            await postsContext.AddRangeAsync(postsList);
+            await postsContext.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -61,12 +58,12 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
 
     public async Task UpdatePostAsync(PostModel post)
     {
-        var dbPost = await _postsContext.Posts.FindAsync(post.Id);
+        var dbPost = await postsContext.Posts.FindAsync(post.Id);
 
-        if (dbPost != null) _mapper.Map(dbPost, post);
+        if (dbPost != null) mapper.Map(dbPost, post);
         try
         {
-            await _postsContext.SaveChangesAsync();
+            await postsContext.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -78,7 +75,7 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
     {
         try
         {
-            return await _postsContext.Posts.Where(post => post.BotID != null && post.BotID.Equals(botToken))
+            return await postsContext.Posts.Where(post => post.BotID != null && post.BotID.Equals(botToken))
                 .ToListAsync();
         }
         catch (Exception e)
