@@ -1,0 +1,7 @@
+﻿services:
+  autopost_bot:
+    image: autopost_bot
+    build:
+      context: .
+      dockerfile: AutoPost_Bot/Dockerfile
+
