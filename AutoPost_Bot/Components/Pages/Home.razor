@@ -14,7 +14,7 @@
 
 <h1>Настройка бота</h1>
 <div class="row">
-    <div class="col-md-5 col-12 ">
+    <div class="col-12 col-xl-6">
         <div class="input-group mb-3">
             <button class="btn btn-outline-secondary"
                     type="button"
@@ -55,8 +55,8 @@
                 @foreach (var post in _posts)
                 {
                     <div class="post-item mb-4" @key="post.Id">
-                        <div class="dropdown mb-3">
-                            <button class="btn btn-outline-secondary dropdown-toggle"
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle mb-3"
                                     type="button"
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false">
@@ -74,6 +74,10 @@
                                     </li>
                                 }
                             </ul>
+                            <button type="button" class="btn btn-danger mb-3 ms-sm-3"
+                                    @onclick="() => RemovePost(post)"
+                            >Удалить пост
+                            </button>
                         </div>
 
                         <div class="form-floating mb-3">
@@ -319,6 +323,20 @@
             GroupRepo.StateChanged -= _groupRepoChangedHandler;
             _isDisposed = true;
         }
+    }
+
+    private Task RemovePost(PostModel post)
+    {
+        try
+        {
+            _posts.Remove(post);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ошибка при удалении поста {e.Message}");
+        }
+
+        return Task.CompletedTask;
     }
 
 }
