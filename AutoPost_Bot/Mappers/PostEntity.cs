@@ -1,12 +1,12 @@
-﻿namespace AutoPost_Bot.Mappers
+﻿namespace AutoPost_Bot.Mappers;
+
+public class PostEntity
 {
-    public class PostEntity
-    {
-        public string? PostText { get; set; }
-        public long GroupID { get; set; }
-        public DateTime PostDateTime { get; set; }
-        public int RepeatDays { get; set; }
-        public int RepeatHours { get; set; }
-        public int RepeatMinutes { get; set; }
-    }
+    public string? PostText { get; set; }
+    public long GroupID { get; set; }
+    public string? BotID { get; set; }
+    public DateTime PostDateTime { get; set; }
+    public int RepeatDays { get; set; }
+    public int RepeatHours { get; set; }
+    public int RepeatMinutes { get; set; }
 }

@@ -42,7 +42,6 @@ namespace AutoPost_Bot.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("BotID")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("GroupID")

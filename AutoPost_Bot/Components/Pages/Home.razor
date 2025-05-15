@@ -169,7 +169,13 @@
         try
         {
             _botToken = BotService.GetBotToken();
+
             await LoadGroups();
+
+            if (BotService.IsBotActive() && !string.IsNullOrWhiteSpace(_botToken))
+            {
+                _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
+            }
 
             _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
             GroupRepo.StateChanged += _groupRepoChangedHandler;
@@ -190,8 +196,6 @@
             _posts.Where(post => !(post.GroupID is { } groupId && _groups.ContainsKey(groupId)))
                 .ToList()
                 .ForEach(post => post.GroupID = null);
-
-            await SaveChanges(false);
         }
         catch (Exception ex)
         {
@@ -219,8 +223,8 @@
             if (BotService.IsBotActive())
             {
                 await BotService.StopBot();
-                ShowStatus("Бот успешно остановлен!");
                 _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
+                ShowStatus("Бот успешно остановлен!");
             }
             else
             {
@@ -229,6 +233,7 @@
 
                 await BotService.StartBot(_botToken);
                 ShowStatus("Бот успешно запущен!");
+                _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
             }
         }
         catch (Exception ex)
