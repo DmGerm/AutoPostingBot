@@ -42,6 +42,14 @@ public class Program
                         .UseLazyLoadingProxies();
                     return new PostsContext(optionBuilder.Options);
                 }).InstancePerDependency();
+
+                cb.Register(_ =>
+                {
+                    var optionBuilder = new DbContextOptionsBuilder<UserContext>();
+                    optionBuilder.UseSqlite(postConnectionString)
+                        .UseLazyLoadingProxies();
+                    return new UserContext(optionBuilder.Options);
+                }).InstancePerDependency();
             });
 
         builder.Services.AddHostedService<PostSchedulerService>();

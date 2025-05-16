@@ -2,13 +2,13 @@
 using AutoPost_Bot.Mappers;
 using AutoPost_Bot.Models;
 
-namespace AutoPost_Bot.MappingProfiles
+namespace AutoPost_Bot.MappingProfiles;
+
+public class PostProfile : Profile
 {
-    public class PostProfile : Profile
+    public PostProfile()
     {
-        public PostProfile()
-        {
-            CreateMap<PostModel, PostEntity>();
-        }
+        CreateMap<PostModel, PostEntity>();
+        CreateMap<PostModel, PostModel>();
     }
 }
