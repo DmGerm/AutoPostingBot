@@ -22,7 +22,7 @@ public class UserContext(DbContextOptions options) : DbContext(options)
 
                 users.Property(u => u.UserId)
                     .HasColumnType("TEXT")
-                    .ValueGeneratedOnAdd();
+                    .ValueGeneratedNever();
 
                 users.HasOne(u => u.Role)
                     .WithMany(role => role.Users)
@@ -35,15 +35,12 @@ public class UserContext(DbContextOptions options) : DbContext(options)
                 role.HasKey(roleModel => roleModel.RoleId)
                     .HasName("RoleId");
 
-                role.HasIndex(roleModel => roleModel.RoleId)
-                    .IsUnique();
-
                 role.Property(roleModel => roleModel.RoleId)
                     .ValueGeneratedNever();
 
-                role.HasData(() => new RoleModel { RoleId = RoleId.Root });
-                role.HasData(() => new RoleModel { RoleId = RoleId.Administrator });
-                role.HasData(() => new RoleModel { RoleId = RoleId.User });
+                role.HasData(new RoleModel { RoleId = RoleId.Root });
+                role.HasData(new RoleModel { RoleId = RoleId.Administrator });
+                role.HasData(new RoleModel { RoleId = RoleId.User });
             }
         );
     }
