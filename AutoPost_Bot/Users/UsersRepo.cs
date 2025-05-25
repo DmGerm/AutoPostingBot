@@ -21,7 +21,7 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
         if (await FindUserAsync(email).ConfigureAwait(false) is not null)
             throw new Exception("User already exists");
 
-        var hash = GeneratePasswordHash(password, out byte[] salt);
+        var hash = GeneratePasswordHash(password, out var salt);
 
         var newUser = new UserModel
         {
