@@ -1,17 +1,77 @@
 ﻿@page "/Login"
+@using AutoPost_Bot.UsersRepo
+@rendermode InteractiveServer
+@inject IUsersRepo UsersRepo
+@inject NavigationManager Navigation
+
 <h3>Войти</h3>
 
 <div class="input-group mb-3">
     <span class="input-group-text" id="basic-addon1">@@</span>
-    <input type="text" class="form-control" placeholder="Введите электронную почту" aria-label="Username" aria-describedby="basic-addon1">
+    <input type="text"
+           class="form-control @(_isEmailInvalid ? "is-invalid" : "")"
+           placeholder="Введите электронную почту"
+           aria-label="Username"
+           aria-describedby="basic-addon1"
+           @bind="_email"
+           @onblur="ValidateEmail">
+    @if (_isEmailInvalid)
+    {
+        <div class="invalid-feedback">
+            Введите корректный адрес электронной почты.
+        </div>
+    }
 </div>
 
 <div class="input-group mb-3">
-    <span class="input-group-text" id="basic-addon1">@@</span>
-    <input type="text" class="form-control" placeholder="Введите пароль" aria-label="Username" aria-describedby="basic-addon1">
+    <input type="text"
+           class="form-control"
+           placeholder="Введите пароль"
+           aria-label="Password"
+           aria-describedby="basic-addon1"
+           @bind="_password">
 </div>
 
-<button type="button" class="btn btn-primary btn-lg">Авторизоваться</button>
+<button type="button" class="btn btn-primary btn-lg" @onclick="OnLoginClicked">Авторизоваться</button>
+
 @code {
-    
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private bool _isEmailInvalid;
+
+    private void ValidateEmail()
+    {
+        _isEmailInvalid = string.IsNullOrWhiteSpace(_email) || !IsValidEmail(_email);
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task OnLoginClicked()
+    {
+        ValidateEmail();
+        if (!_isEmailInvalid)
+        {
+            try
+            {
+                //ToDo: Сделать проверку на количество пользователей, если 0, то зарегестрировать и перенаправить
+                if (await UsersRepo.LoginUserAsync(_email, _password))
+                    Navigation.NavigateTo("/");
+            }
+            catch
+            {
+                //TODo: Реализовать логику неуспешной авторизации (предупреждение)
+            }
+        }
+    }
 }

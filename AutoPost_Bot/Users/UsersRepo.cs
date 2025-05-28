@@ -10,7 +10,8 @@ namespace AutoPost_Bot.Users;
 
 public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
 {
-    private readonly UserContext? _userContext = serviceProvider.GetService<UserContext>();
+    private readonly UserContext _userContext = serviceProvider?.GetService<UserContext>() 
+                                                ?? throw new InvalidOperationException("User context is null!");
 
     public Task<UserModel> CreateUserAsync(UserModel user)
     {
@@ -25,9 +26,6 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
         if (await _userContext.Users.AnyAsync(u => u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)))
             throw new Exception("User already exists");
 
-        if (await _userContext.Users.AnyAsync())
-            roleId = RoleId.Root;
-            
         var hash = GeneratePasswordHash(password, out var salt);
 
         var newUser = new UserModel
@@ -87,6 +85,8 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
     {
         throw new NotImplementedException();
     }
+
+    public async Task<bool> IfAnyUsersAsync() => await _userContext.Users.AnyAsync();
 
     public async Task<bool> LoginUserAsync(string email, string password)
     {
