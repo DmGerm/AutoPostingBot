@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using AutoPost_Bot.Data;
 using AutoPost_Bot.Models;
 using AutoPost_Bot.UsersRepo;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot.Users;
 
@@ -16,11 +17,17 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
         throw new NotImplementedException();
     }
 
-    public async Task<UserModel> CreateUserAsync(string email, string password)
+    public async Task<UserModel> CreateUserAsync(string email, string password, RoleId roleId)
     {
-        if (await FindUserAsync(email).ConfigureAwait(false) is not null)
+        if (_userContext == null)
+            throw new NullReferenceException("UserContext is null");
+        
+        if (await _userContext.Users.AnyAsync(u => u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)))
             throw new Exception("User already exists");
 
+        if (await _userContext.Users.AnyAsync())
+            roleId = RoleId.Root;
+            
         var hash = GeneratePasswordHash(password, out var salt);
 
         var newUser = new UserModel
@@ -28,7 +35,7 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
             Email = email,
             PasswordHash = hash,
             PasswordSalt = salt,
-            RoleId = RoleId.User
+            RoleId = roleId
         };
 
         try
@@ -44,8 +51,6 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
             Console.WriteLine(e);
             throw;
         }
-
-
         return newUser;
     }
 
@@ -59,14 +64,23 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
         throw new NotImplementedException();
     }
 
-    public Task<UserModel> DeleteUserAsync(long userId)
+    public Task<UserModel> DeleteUserAsync(string email)
     {
         throw new NotImplementedException();
     }
 
     public async Task<UserModel?> FindUserAsync(string email)
     {
-        throw new NotImplementedException();
+        if (_userContext is null)
+            throw new InvalidOperationException("UserContext не инициализирован");
+        
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email не может быть пустым", nameof(email));
+
+        return await _userContext.Users
+            .FirstOrDefaultAsync(user => 
+                user.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
+            .ConfigureAwait(false);
     }
 
     public Task<bool> LoginUserAsync(UserModel user)
@@ -74,9 +88,12 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
         throw new NotImplementedException();
     }
 
-    public Task<bool> LoginUserAsync(long userId, string password)
+    public async Task<bool> LoginUserAsync(string email, string password)
     {
-        throw new NotImplementedException();
+        var user = await FindUserAsync(email).ConfigureAwait(false) ??
+            throw new InvalidOperationException("Пользователь не найден");
+        
+        return VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash);
     }
 
     [GeneratedRegex(@"^[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}$")]

@@ -30,7 +30,6 @@
         <Content Include="..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
-        <Content Include="wwwroot\lib\bootstrap\dist\css\.DS_Store"/>
     </ItemGroup>
 
     <ItemGroup>
