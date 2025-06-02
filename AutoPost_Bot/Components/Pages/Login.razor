@@ -1,5 +1,6 @@
 ﻿@page "/Login"
-@using AutoPost_Bot.UsersRepo
+@using AutoPost_Bot.Models
+@using AutoPost_Bot.Users
 @rendermode InteractiveServer
 @inject IUsersRepo UsersRepo
 @inject NavigationManager Navigation
@@ -24,7 +25,7 @@
 </div>
 
 <div class="input-group mb-3">
-    <input type="text"
+    <input type="password"
            class="form-control"
            placeholder="Введите пароль"
            aria-label="Password"
@@ -62,14 +63,19 @@
         ValidateEmail();
         if (!_isEmailInvalid)
         {
-            try
-            {
+              try  {
+                if (!await UsersRepo.IfAnyUsersAsync())
+                {
+                    await UsersRepo.CreateUserAsync(_email, _password, RoleId.Root);
+                }
                 //ToDo: Сделать проверку на количество пользователей, если 0, то зарегестрировать и перенаправить
+                
                 if (await UsersRepo.LoginUserAsync(_email, _password))
                     Navigation.NavigateTo("/");
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine($"Ошибка при логине: {ex.Message}");
                 //TODo: Реализовать логику неуспешной авторизации (предупреждение)
             }
         }

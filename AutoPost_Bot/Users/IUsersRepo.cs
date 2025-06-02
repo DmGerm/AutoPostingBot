@@ -1,6 +1,6 @@
 ﻿using AutoPost_Bot.Models;
 
-namespace AutoPost_Bot.UsersRepo;
+namespace AutoPost_Bot.Users;
 
 public interface IUsersRepo
 {

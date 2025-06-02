@@ -6,6 +6,7 @@ using AutoPost_Bot.Data;
 using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.ScheduleService;
 using AutoPost_Bot.TelegramGroupsRepo;
+using AutoPost_Bot.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot;
@@ -25,10 +26,13 @@ public class Program
 
                 cb.RegisterType<PostsRepo>()
                     .As<IPostsRepo>().InstancePerLifetimeScope();
+                
+                cb.RegisterType<UsersRepo>()
+                    .As<IUsersRepo>().InstancePerLifetimeScope();
 
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
-
+                
                 Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
                 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
                 var postsFilePath = Path.Combine(dataDir, "posts.db");

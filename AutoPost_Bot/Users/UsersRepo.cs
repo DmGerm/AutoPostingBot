@@ -3,14 +3,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using AutoPost_Bot.Data;
 using AutoPost_Bot.Models;
-using AutoPost_Bot.UsersRepo;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot.Users;
 
-public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
+public partial class UsersRepo(UserContext userContext) : IUsersRepo
 {
-    private readonly UserContext _userContext = serviceProvider?.GetService<UserContext>() 
+    private readonly UserContext _userContext = userContext 
                                                 ?? throw new InvalidOperationException("User context is null!");
 
     public Task<UserModel> CreateUserAsync(UserModel user)
@@ -23,19 +22,21 @@ public partial class UsersRepo(IServiceProvider serviceProvider) : IUsersRepo
         if (_userContext == null)
             throw new NullReferenceException("UserContext is null");
         
-        if (await _userContext.Users.AnyAsync(u => u.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)))
+        if (await _userContext.Users.AnyAsync(u => 
+                u.Email.ToLower() == email.ToLower()))
             throw new Exception("User already exists");
 
         var hash = GeneratePasswordHash(password, out var salt);
-
+        Console.WriteLine(email);
         var newUser = new UserModel
         {
+            UserId = Guid.NewGuid(),
             Email = email,
             PasswordHash = hash,
             PasswordSalt = salt,
             RoleId = roleId
         };
-
+        Console.WriteLine(newUser.Email);
         try
         {
             if (_userContext == null)
