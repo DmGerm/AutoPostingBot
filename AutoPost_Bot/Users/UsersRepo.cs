@@ -27,7 +27,7 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
             throw new Exception("User already exists");
 
         var hash = GeneratePasswordHash(password, out var salt);
-        Console.WriteLine(email);
+
         var newUser = new UserModel
         {
             UserId = Guid.NewGuid(),
@@ -117,6 +117,6 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
     {
         var passwordBytes = Encoding.UTF8.GetBytes(password);
 
-        return Equals(SHA256.HashData(passwordBytes.Concat(salt).ToArray()), passwordHash);
+        return SHA256.HashData(passwordBytes.Concat(salt).ToArray()).SequenceEqual(passwordHash);
     }
 }
