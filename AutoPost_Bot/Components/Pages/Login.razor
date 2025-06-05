@@ -69,7 +69,7 @@
                     await UsersRepo.CreateUserAsync(_email, _password, RoleId.Root);
                 }
                 //ToDo: Сделать проверку на количество пользователей, если 0, то зарегестрировать и перенаправить
-                
+                Console.WriteLine(await UsersRepo.LoginUserAsync(_email, _password));
                 if (await UsersRepo.LoginUserAsync(_email, _password))
                     Navigation.NavigateTo("/");
             }

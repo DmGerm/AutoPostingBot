@@ -9,7 +9,7 @@ namespace AutoPost_Bot.Users;
 
 public partial class UsersRepo(UserContext userContext) : IUsersRepo
 {
-    private readonly UserContext _userContext = userContext 
+    private readonly UserContext _userContext = userContext
                                                 ?? throw new InvalidOperationException("User context is null!");
 
     public Task<UserModel> CreateUserAsync(UserModel user)
@@ -21,8 +21,8 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
     {
         if (_userContext == null)
             throw new NullReferenceException("UserContext is null");
-        
-        if (await _userContext.Users.AnyAsync(u => 
+
+        if (await _userContext.Users.AnyAsync(u =>
                 u.Email.ToLower() == email.ToLower()))
             throw new Exception("User already exists");
 
@@ -36,7 +36,6 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
             PasswordSalt = salt,
             RoleId = roleId
         };
-        Console.WriteLine(newUser.Email);
         try
         {
             if (_userContext == null)
@@ -50,6 +49,7 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
             Console.WriteLine(e);
             throw;
         }
+
         return newUser;
     }
 
@@ -72,13 +72,13 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
     {
         if (_userContext is null)
             throw new InvalidOperationException("UserContext не инициализирован");
-        
+
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email не может быть пустым", nameof(email));
 
         return await _userContext.Users
-            .FirstOrDefaultAsync(user => 
-                user.Email.Equals(email, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefaultAsync(user =>
+                user.Email.ToLower() == email.ToLower())
             .ConfigureAwait(false);
     }
 
@@ -87,13 +87,16 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
         throw new NotImplementedException();
     }
 
-    public async Task<bool> IfAnyUsersAsync() => await _userContext.Users.AnyAsync();
+    public async Task<bool> IfAnyUsersAsync()
+    {
+        return await _userContext.Users.AnyAsync();
+    }
 
     public async Task<bool> LoginUserAsync(string email, string password)
     {
         var user = await FindUserAsync(email).ConfigureAwait(false) ??
-            throw new InvalidOperationException("Пользователь не найден");
-        
+                   throw new InvalidOperationException("Пользователь не найден");
+
         return VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash);
     }
 
