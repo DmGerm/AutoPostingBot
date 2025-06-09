@@ -57,12 +57,23 @@ public class Program
             });
 
         builder.Services.AddHostedService<PostSchedulerService>();
+        builder.Services.AddHttpContextAccessor();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
 
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        
+        builder.Services.AddAuthentication("MyCookieAuth")
+            .AddCookie("MyCookieAuth", options =>
+            {
+                options.LoginPath = "/Login";
+                /*options.LogoutPath = "/Logout";
+                options.AccessDeniedPath = "/AccessDenied";*/
+            });
+
+        builder.Services.AddAuthorization();
 
         var app = builder.Build();
 
@@ -87,6 +98,7 @@ public class Program
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
+        
 
         app.Run();
     }

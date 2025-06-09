@@ -8,7 +8,9 @@
 @using AutoPost_Bot.Models
 @using AutoPost_Bot.PostsRepository
 @using AutoPost_Bot.TelegramGroupsRepo
+@using Microsoft.AspNetCore.Authorization
 @implements IDisposable
+@attribute [Authorize]
 
 <PageTitle>Home</PageTitle>
 

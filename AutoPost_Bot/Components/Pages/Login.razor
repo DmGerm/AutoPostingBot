@@ -1,9 +1,12 @@
 ﻿@page "/Login"
+@using System.Security.Claims
 @using AutoPost_Bot.Models
 @using AutoPost_Bot.Users
+@using Microsoft.AspNetCore.Authentication
 @rendermode InteractiveServer
 @inject IUsersRepo UsersRepo
 @inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor    
 
 <h3>Войти</h3>
 
@@ -78,15 +81,35 @@
             if (!await UsersRepo.IfAnyUsersAsync())
                 await UsersRepo.CreateUserAsync(_email, _password, RoleId.Root);
 
-            if (await UsersRepo.LoginUserAsync(_email, _password))
-                Navigation.NavigateTo("/");
-            else
+            var user = await UsersRepo.LoginUserAsync(_email, _password);
+
+            if (user == null)
+            {
                 _isLoginError = true;
+                return;
+            }
+
+            var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Email),
+                    new Claim(ClaimTypes.Role, user.RoleId.ToString())
+                };
+                
+                
+            var identity = new ClaimsIdentity(claims, "MyCookieAuth");
+            var principal = new ClaimsPrincipal(identity);
+
+            if (HttpContextAccessor.HttpContext != null) 
+                await HttpContextAccessor.HttpContext.SignInAsync("MyCookieAuth", principal);
+
+            Navigation.NavigateTo("/");
+                
         }
         catch (Exception ex)
         {
             _isLoginError = true;
             Console.WriteLine($"Ошибка при логине: {ex.Message}");
+            StateHasChanged();
         }
     }
 }
