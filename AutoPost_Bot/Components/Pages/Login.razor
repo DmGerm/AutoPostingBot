@@ -7,38 +7,47 @@
 
 <h3>Войти</h3>
 
-<div class="input-group mb-3">
-    <span class="input-group-text" id="basic-addon1">@@</span>
-    <input type="text"
-           class="form-control @(_isEmailInvalid ? "is-invalid" : "")"
-           placeholder="Введите электронную почту"
-           aria-label="Username"
-           aria-describedby="basic-addon1"
-           @bind="_email"
-           @onblur="ValidateEmail">
-    @if (_isEmailInvalid)
-    {
-        <div class="invalid-feedback">
-            Введите корректный адрес электронной почты.
-        </div>
-    }
-</div>
+<form @onsubmit="OnLoginClicked">
+    <div class="input-group mb-3">
+        <span class="input-group-text" id="basic-addon1">@@</span>
+        <input type="text"
+               class="form-control @(_isEmailInvalid ? "is-invalid" : "")"
+               placeholder="Введите электронную почту"
+               aria-label="Username"
+               aria-describedby="basic-addon1"
+               @bind="_email"
+               @onblur="ValidateEmail">
+        @if (_isEmailInvalid)
+        {
+            <div class="invalid-feedback">
+                Введите корректный адрес электронной почты.
+            </div>
+        }
+        @if (_isLoginError)
+        {
+            <div class="invalid-feedback">
+                Логин или пароль неверные.
+            </div>
+        }
+    </div>
 
-<div class="input-group mb-3">
-    <input type="password"
-           class="form-control"
-           placeholder="Введите пароль"
-           aria-label="Password"
-           aria-describedby="basic-addon1"
-           @bind="_password">
-</div>
+    <div class="input-group mb-3">
+        <input type="password"
+               class="form-control"
+               placeholder="Введите пароль"
+               aria-label="Password"
+               aria-describedby="basic-addon1"
+               @bind="_password">
+    </div>
 
-<button type="button" class="btn btn-primary btn-lg" @onclick="OnLoginClicked">Авторизоваться</button>
+    <button type="submit" class="btn btn-primary btn-lg">Авторизоваться</button>
+</form>
 
 @code {
     private string _email = string.Empty;
     private string _password = string.Empty;
     private bool _isEmailInvalid;
+    private bool _isLoginError;
 
     private void ValidateEmail()
     {
@@ -61,22 +70,23 @@
     private async Task OnLoginClicked()
     {
         ValidateEmail();
-        if (!_isEmailInvalid)
+        if (_isEmailInvalid)
+            return;
+
+        try
         {
-              try  {
-                if (!await UsersRepo.IfAnyUsersAsync())
-                {
-                    await UsersRepo.CreateUserAsync(_email, _password, RoleId.Root);
-                }
-                //ToDo: Сделать проверку на количество пользователей, если 0, то зарегестрировать и перенаправить
-                Console.WriteLine(await UsersRepo.LoginUserAsync(_email, _password));
-                if (await UsersRepo.LoginUserAsync(_email, _password))
-                    Navigation.NavigateTo("/");
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine($"Ошибка при логине: {ex.Message}");
-            }
+            if (!await UsersRepo.IfAnyUsersAsync())
+                await UsersRepo.CreateUserAsync(_email, _password, RoleId.Root);
+
+            if (await UsersRepo.LoginUserAsync(_email, _password))
+                Navigation.NavigateTo("/");
+            else
+                _isLoginError = true;
+        }
+        catch (Exception ex)
+        {
+            _isLoginError = true;
+            Console.WriteLine($"Ошибка при логине: {ex.Message}");
         }
     }
 }
