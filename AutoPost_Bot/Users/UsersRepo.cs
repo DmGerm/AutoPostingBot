@@ -106,18 +106,20 @@
 
         private byte[] GeneratePasswordHash(string password, out byte[] salt)
         {
-            salt = new byte[16];
-            new Random().NextBytes(salt);
-
-            var passwordBytes = Encoding.UTF8.GetBytes(password);
-
-            return SHA256.HashData(passwordBytes.Concat(salt).ToArray());
+            salt = RandomNumberGenerator.GetBytes(16); 
+            using var sha256 = SHA256.Create();
+            
+            var combined = Encoding.UTF8.GetBytes(password).Concat(salt).ToArray();
+            
+            return sha256.ComputeHash(combined);
         }
 
         private bool VerifyPasswordHash(string password, byte[] salt, byte[] passwordHash)
-        {
-            var passwordBytes = Encoding.UTF8.GetBytes(password);
+    {
 
-            return SHA256.HashData(passwordBytes.Concat(salt).ToArray()).SequenceEqual(passwordHash);
-        }
+        var combined = Encoding.UTF8.GetBytes(password).Concat(salt).ToArray();
+        var computedHash = SHA256.HashData(combined);
+
+        return computedHash.SequenceEqual(passwordHash);
     }
+}

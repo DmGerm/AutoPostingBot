@@ -26,12 +26,6 @@
                 Введите корректный адрес электронной почты.
             </div>
         }
-        @if (_isLoginError)
-        {
-            <div class="invalid-feedback">
-                Логин или пароль неверные.
-            </div>
-        }
     </div>
 
     <div class="input-group mb-3">
@@ -46,11 +40,19 @@
     <button type="submit" class="btn btn-primary btn-lg">Авторизоваться</button>
 </form>
 
+@if (_isLoginError)
+{
+    <div class="invalid-feedback">
+        @_loginErrorMessage
+    </div>
+}
+
 @code {
     private string _email = string.Empty;
     private string _password = string.Empty;
     private bool _isEmailInvalid;
     private bool _isLoginError;
+    private string _loginErrorMessage = string.Empty;
 
     private void ValidateEmail()
     {
@@ -108,7 +110,7 @@
         catch (Exception ex)
         {
             _isLoginError = true;
-            Console.WriteLine($"Ошибка при логине: {ex.Message}");
+            _loginErrorMessage = ex.Message;
             StateHasChanged();
         }
     }
