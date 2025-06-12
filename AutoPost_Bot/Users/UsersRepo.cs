@@ -96,8 +96,11 @@
         {
             var user = await FindUserAsync(email).ConfigureAwait(false) ??
                        throw new InvalidOperationException("Пользователь не найден");
-            
-                return VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash) ? user : null;
+
+            if (!VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash))
+                throw new ArgumentException("Пароль неправильный");
+
+            return user;
 
         }
 

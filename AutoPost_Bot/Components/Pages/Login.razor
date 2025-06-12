@@ -10,6 +10,12 @@
 
 <h3>Войти</h3>
 
+@if (_isLoginError)
+{
+    <div class="alert alert-danger" role="alert">
+        @_loginErrorMessage
+    </div>
+}
 <form @onsubmit="OnLoginClicked">
     <div class="input-group mb-3">
         <span class="input-group-text" id="basic-addon1">@@</span>
@@ -40,12 +46,7 @@
     <button type="submit" class="btn btn-primary btn-lg">Авторизоваться</button>
 </form>
 
-@if (_isLoginError)
-{
-    <div class="invalid-feedback">
-        @_loginErrorMessage
-    </div>
-}
+
 
 @code {
     private string _email = string.Empty;
@@ -85,11 +86,7 @@
 
             var user = await UsersRepo.LoginUserAsync(_email, _password);
 
-            if (user == null)
-            {
-                _isLoginError = true;
-                return;
-            }
+            Console.WriteLine(user.Email);
 
             var claims = new List<Claim>
                 {
@@ -111,6 +108,8 @@
         {
             _isLoginError = true;
             _loginErrorMessage = ex.Message;
+            Console.WriteLine(ex.Message);
+            Console.WriteLine(ex.StackTrace);
             StateHasChanged();
         }
     }
