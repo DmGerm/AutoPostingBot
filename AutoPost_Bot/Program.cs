@@ -69,7 +69,8 @@ public class Program
             .AddCookie("MyCookieAuth", options =>
             {
                 options.LoginPath = "/Login";
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+                options.ExpireTimeSpan = TimeSpan.FromDays(30);
+                options.SlidingExpiration = true;
                 /*options.LogoutPath = "/Logout";
                 options.AccessDeniedPath = "/AccessDenied";*/
             });
