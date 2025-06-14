@@ -69,11 +69,12 @@ public class Program
             .AddCookie("MyCookieAuth", options =>
             {
                 options.LoginPath = "/Login";
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
                 /*options.LogoutPath = "/Logout";
                 options.AccessDeniedPath = "/AccessDenied";*/
             });
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddRazorPages();
 
         var app = builder.Build();
 
@@ -92,16 +93,21 @@ public class Program
         };
 
         app.UseHttpsRedirection();
+        app.UseStaticFiles();
 
-        app.UseAntiforgery();
+        app.UseRouting();
 
         app.UseAuthentication();
         app.UseAuthorization();
 
+        app.UseAntiforgery();
+
         app.MapStaticAssets();
+
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 
+        app.MapRazorPages();
 
         app.Run();
     }
