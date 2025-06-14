@@ -26,13 +26,13 @@ public class Program
 
                 cb.RegisterType<PostsRepo>()
                     .As<IPostsRepo>().InstancePerLifetimeScope();
-                
+
                 cb.RegisterType<UsersRepo>()
                     .As<IUsersRepo>().InstancePerLifetimeScope();
 
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
-                
+
                 Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
                 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
                 var postsFilePath = Path.Combine(dataDir, "posts.db");
@@ -64,7 +64,7 @@ public class Program
             .AddInteractiveServerComponents();
 
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-        
+
         builder.Services.AddAuthentication("MyCookieAuth")
             .AddCookie("MyCookieAuth", options =>
             {
@@ -95,10 +95,13 @@ public class Program
 
         app.UseAntiforgery();
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.MapStaticAssets();
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
-        
+
 
         app.Run();
     }
