@@ -1,0 +1,60 @@
+﻿@page "/usersmanager"
+@using AutoPost_Bot.Models
+@using AutoPost_Bot.Users
+@inject IUsersRepo UserRepo
+@rendermode InteractiveServer
+<h3>Управление пользователями</h3>
+
+<table class="table table-hover table-bordered">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Email</th>
+            <th scope="col">Password</th>
+            <th scope="col">Role</th>
+        </tr>
+    </thead>
+
+    @foreach (var item in users.Select((user, index) => new { user, index }))
+    {
+        <tbody>
+            <tr>
+                <th scope="row"
+                    class="text-center 
+                    align-middle">
+                    @(item.index + 1)
+                </th>
+                <td>
+                    <div class="input-group input-group-sm mt-0 mb-0">
+                        <input @bind="item.user.Email"
+                               type="text"
+                               class="form-control border-0 bg-transparent"
+                               aria-label="Email input" />
+                    </div>
+                  
+                </td>
+                <td>
+                    2
+                </td>
+                <td>
+@*                         <select 
+                                class="form-select">
+                        <option value="Admin">Admin</option>
+                        <option value="User">User</option>
+                    </select> *@
+                </td>
+            </tr>
+        </tbody>
+    }
+
+
+</table>
+
+@code {
+    private List<UserModel> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserRepo.GetAllUsersAsync();
+    }
+}
