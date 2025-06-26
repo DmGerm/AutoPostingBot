@@ -1,4 +1,9 @@
-﻿<nav class="navbar navbar-expand-lg bg-body-tertiary mb-2">
+﻿@using AutoPost_Bot.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-2">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">Autopost Bot</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
@@ -10,9 +15,12 @@
                 <li class="nav-item">
                     <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">На главную</NavLink>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/usersmanager">Управление пользователями</a>
-                </li>
+                @if (IsAdminOrRoot)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" href="/usersmanager">Управление пользователями</a>
+                    </li>
+                }
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
                        aria-expanded="false">
@@ -29,3 +37,21 @@
         </div>
     </div>
 </nav>
+
+
+@code {
+    private RoleId CurrentUserRole = RoleId.User; 
+    private bool IsAdminOrRoot => CurrentUserRole == RoleId.Administrator || CurrentUserRole == RoleId.Root;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var roleClaim = user.FindFirst(ClaimTypes.Role);
+        if (roleClaim != null && Enum.TryParse<RoleId>(roleClaim.Value, out var role))
+        {
+            CurrentUserRole = role;
+        }
+    }
+}

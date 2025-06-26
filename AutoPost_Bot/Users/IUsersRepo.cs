@@ -14,4 +14,5 @@ public interface IUsersRepo
     public Task<bool> LoginUserAsync(UserModel user);
     public Task<bool> IfAnyUsersAsync();
     public Task<UserModel?> LoginUserAsync(string email, string password);
+    public byte[] GeneratePasswordHash(string password, out byte[] salt);
 }

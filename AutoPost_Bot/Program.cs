@@ -3,6 +3,7 @@ using Autofac.Extensions.DependencyInjection;
 using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
 using AutoPost_Bot.Data;
+using AutoPost_Bot.MappingProfiles;
 using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.ScheduleService;
 using AutoPost_Bot.TelegramGroupsRepo;
@@ -64,6 +65,7 @@ public class Program
             .AddInteractiveServerComponents();
 
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+        builder.Services.AddScoped<PasswordHashResolver>();
 
         builder.Services.AddAuthentication("MyCookieAuth")
             .AddCookie("MyCookieAuth", options =>

@@ -1,8 +1,13 @@
 ﻿@page "/usersmanager"
 @using AutoPost_Bot.Models
 @using AutoPost_Bot.Users
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
 @inject IUsersRepo UserRepo
+@inject IMapper Mapper
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrator,Root")]
+
 <h3>Управление пользователями</h3>
 
 <table class="table table-hover table-bordered">
@@ -20,8 +25,8 @@
         <tbody>
             <tr>
                 <th scope="row"
-                    class="text-center 
-                    align-middle">
+                    class="text-center
+                        align-middle">
                     @(item.index + 1)
                 </th>
                 <td>
@@ -31,17 +36,36 @@
                                class="form-control border-0 bg-transparent"
                                aria-label="Email input" />
                     </div>
-                  
+
                 </td>
                 <td>
-                    2
+                    <div class="input-group input-group-sm mt-0 mb-0">
+                        <input @bind="item.user.Password"
+                               type="password"
+                               class="form-control border-0 bg-transparent"
+                               aria-label="Email input" />
+                    </div>
                 </td>
                 <td>
-@*                         <select 
-                                class="form-select">
-                        <option value="Admin">Admin</option>
-                        <option value="User">User</option>
-                    </select> *@
+                    <select class="form-select form-select-sm mt-0 mb-0"
+                            @bind="item.user.RoleId"
+                            aria-label="Role Select">
+
+                        @if (item.user.RoleId == RoleId.Root)
+                        {
+                            <option value="@RoleId.Root">@RoleId.Root</option>
+                        }
+                        else
+                        {
+                            @foreach (var role in Enum.GetValues<RoleId>())
+                            {
+                                if (role != RoleId.Root)
+                                {
+                                    <option value="@role">@role</option>
+                                }
+                            }
+                        }
+                    </select>
                 </td>
             </tr>
         </tbody>
@@ -51,10 +75,14 @@
 </table>
 
 @code {
-    private List<UserModel> users = new();
+    private List<UserEditModel> users = new();
 
     protected override async Task OnInitializedAsync()
     {
-        users = await UserRepo.GetAllUsersAsync();
+        var userModels = await UserRepo.GetAllUsersAsync();
+
+        users = userModels
+            .Select(user => Mapper.Map<UserEditModel>(user))
+            .ToList();
     }
 }

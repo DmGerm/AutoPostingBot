@@ -107,7 +107,7 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
     [GeneratedRegex(@"^[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}$")]
     private static partial Regex EmailRegex();
 
-    private byte[] GeneratePasswordHash(string password, out byte[] salt)
+    public byte[] GeneratePasswordHash(string password, out byte[] salt)
     {
         salt = RandomNumberGenerator.GetBytes(16);
         using var sha256 = SHA256.Create();
