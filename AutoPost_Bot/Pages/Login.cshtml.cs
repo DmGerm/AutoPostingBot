@@ -3,7 +3,6 @@ using AutoPost_Bot.Users;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Mail;
 using System.Security.Claims;
 
 namespace AutoPost_Bot.Pages
@@ -18,21 +17,24 @@ namespace AutoPost_Bot.Pages
         }
 
         [BindProperty]
-        public string Email { get; set; } = string.Empty;
+        public string Email { get; set; } = "";
 
         [BindProperty]
-        public string Password { get; set; } = string.Empty;
+        public string Password { get; set; } = "";
 
-        public bool IsEmailInvalid { get; set; }
-        public bool IsLoginError { get; set; }
-        public string LoginErrorMessage { get; set; } = string.Empty;
+        public string? Error { get; set; }
+
+        public void OnGet()
+        {
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            ValidateEmail();
-
-            if (IsEmailInvalid)
+            if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+            {
+                Error = "¬ведите корректные данные";
                 return Page();
+            }
 
             try
             {
@@ -52,33 +54,12 @@ namespace AutoPost_Bot.Pages
 
                 await HttpContext.SignInAsync("MyCookieAuth", principal);
 
-                return RedirectToPage("/Index");
+                return Redirect("/");
             }
             catch (Exception ex)
             {
-                IsLoginError = true;
-                LoginErrorMessage = ex.Message;
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.StackTrace);
+                Error = "ќшибка входа: " + ex.Message;
                 return Page();
-            }
-        }
-
-        private void ValidateEmail()
-        {
-            IsEmailInvalid = string.IsNullOrWhiteSpace(Email) || !IsValidEmail(Email);
-        }
-
-        private bool IsValidEmail(string email)
-        {
-            try
-            {
-                var addr = new MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
             }
         }
     }

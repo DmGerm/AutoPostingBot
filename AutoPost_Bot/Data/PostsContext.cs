@@ -21,6 +21,7 @@ namespace AutoPost_Bot.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
+
             modelBuilder.Entity<GroupModel>(group =>
             {
                 group.HasKey(x => x.GroupId).HasName("Group_Id");

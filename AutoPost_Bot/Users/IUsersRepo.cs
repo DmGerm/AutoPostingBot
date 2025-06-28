@@ -6,6 +6,7 @@ public interface IUsersRepo
 {
     public Task<UserModel> CreateUserAsync(UserModel user);
     public Task<UserModel> CreateUserAsync(string email, string password, RoleId roleId);
+    public Task<List<UserModel>> GetAllUsersAsync();
     public Task<UserModel> UpdateUserAsync(UserModel user);
     public Task<UserModel> DeleteUserAsync(UserModel user);
     public Task<UserModel> DeleteUserAsync(string email);
@@ -13,4 +14,5 @@ public interface IUsersRepo
     public Task<bool> LoginUserAsync(UserModel user);
     public Task<bool> IfAnyUsersAsync();
     public Task<UserModel?> LoginUserAsync(string email, string password);
+    public byte[] GeneratePasswordHash(string password, out byte[] salt);
 }

@@ -1,123 +1,123 @@
-﻿    using System.Security.Cryptography;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using AutoPost_Bot.Data;
-    using AutoPost_Bot.Models;
-    using Microsoft.EntityFrameworkCore;
+﻿using AutoPost_Bot.Data;
+using AutoPost_Bot.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 
-    namespace AutoPost_Bot.Users;
+namespace AutoPost_Bot.Users;
 
-    public partial class UsersRepo(UserContext userContext) : IUsersRepo
+public partial class UsersRepo(UserContext userContext) : IUsersRepo
+{
+    private readonly UserContext _userContext = userContext
+                                                ?? throw new InvalidOperationException("User context is null!");
+
+    public Task<UserModel> CreateUserAsync(UserModel user)
     {
-        private readonly UserContext _userContext = userContext
-                                                    ?? throw new InvalidOperationException("User context is null!");
+        throw new NotImplementedException();
+    }
 
-        public Task<UserModel> CreateUserAsync(UserModel user)
+    public async Task<UserModel> CreateUserAsync(string email, string password, RoleId roleId)
+    {
+        if (_userContext == null)
+            throw new NullReferenceException("UserContext is null");
+
+        if (await _userContext.Users.AnyAsync(u =>
+                u.Email.ToLower() == email.ToLower()))
+            throw new Exception("User already exists");
+
+        var hash = GeneratePasswordHash(password, out var salt);
+
+        var newUser = new UserModel
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task<UserModel> CreateUserAsync(string email, string password, RoleId roleId)
+            UserId = Guid.NewGuid(),
+            Email = email,
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            RoleId = roleId
+        };
+        try
         {
             if (_userContext == null)
-                throw new NullReferenceException("UserContext is null");
+                throw new Exception("UserContext can't be null.");
 
-            if (await _userContext.Users.AnyAsync(u =>
-                    u.Email.ToLower() == email.ToLower()))
-                throw new Exception("User already exists");
-
-            var hash = GeneratePasswordHash(password, out var salt);
-
-            var newUser = new UserModel
-            {
-                UserId = Guid.NewGuid(),
-                Email = email,
-                PasswordHash = hash,
-                PasswordSalt = salt,
-                RoleId = roleId
-            };
-            try
-            {
-                if (_userContext == null)
-                    throw new Exception("UserContext can't be null.");
-
-                _userContext.Users.Add(newUser);
-                await _userContext.SaveChangesAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-
-            return newUser;
+            _userContext.Users.Add(newUser);
+            await _userContext.SaveChangesAsync();
         }
-
-        public Task<UserModel> UpdateUserAsync(UserModel user)
+        catch (Exception e)
         {
-            throw new NotImplementedException();
+            Console.WriteLine(e);
+            throw;
         }
 
-        public Task<UserModel> DeleteUserAsync(UserModel user)
-        {
-            throw new NotImplementedException();
-        }
+        return newUser;
+    }
 
-        public Task<UserModel> DeleteUserAsync(string email)
-        {
-            throw new NotImplementedException();
-        }
+    public Task<UserModel> UpdateUserAsync(UserModel user)
+    {
+        throw new NotImplementedException();
+    }
 
-        public async Task<UserModel?> FindUserAsync(string email)
-        {
-            if (_userContext is null)
-                throw new InvalidOperationException("UserContext не инициализирован");
+    public Task<UserModel> DeleteUserAsync(UserModel user)
+    {
+        throw new NotImplementedException();
+    }
 
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Email не может быть пустым", nameof(email));
+    public Task<UserModel> DeleteUserAsync(string email)
+    {
+        throw new NotImplementedException();
+    }
 
-            return await _userContext.Users
-                .FirstOrDefaultAsync(user =>
-                    user.Email.ToLower() == email.ToLower())
-                .ConfigureAwait(false);
-        }
+    public async Task<UserModel?> FindUserAsync(string email)
+    {
+        if (_userContext is null)
+            throw new InvalidOperationException("UserContext не инициализирован");
 
-        public Task<bool> LoginUserAsync(UserModel user)
-        {
-            throw new NotImplementedException();
-        }
+        if (string.IsNullOrWhiteSpace(email))
+            throw new ArgumentException("Email не может быть пустым", nameof(email));
 
-        public async Task<bool> IfAnyUsersAsync()
-        {
-            return await _userContext.Users.AnyAsync();
-        }
+        return await _userContext.Users
+            .FirstOrDefaultAsync(user =>
+                user.Email.ToLower() == email.ToLower())
+            .ConfigureAwait(false);
+    }
 
-        public async Task<UserModel?> LoginUserAsync(string email, string password)
-        {
-            var user = await FindUserAsync(email).ConfigureAwait(false) ??
-                       throw new InvalidOperationException("Пользователь не найден");
+    public Task<bool> LoginUserAsync(UserModel user)
+    {
+        throw new NotImplementedException();
+    }
 
-            if (!VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash))
-                throw new ArgumentException("Пароль неправильный");
+    public async Task<bool> IfAnyUsersAsync()
+    {
+        return await _userContext.Users.AnyAsync();
+    }
 
-            return user;
+    public async Task<UserModel?> LoginUserAsync(string email, string password)
+    {
+        var user = await FindUserAsync(email).ConfigureAwait(false) ??
+                   throw new InvalidOperationException("Пользователь не найден");
 
-        }
+        if (!VerifyPasswordHash(password, user.PasswordSalt, user.PasswordHash))
+            throw new ArgumentException("Пароль неправильный");
 
-        [GeneratedRegex(@"^[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}$")]
-        private static partial Regex EmailRegex();
+        return user;
 
-        private byte[] GeneratePasswordHash(string password, out byte[] salt)
-        {
-            salt = RandomNumberGenerator.GetBytes(16); 
-            using var sha256 = SHA256.Create();
-            
-            var combined = Encoding.UTF8.GetBytes(password).Concat(salt).ToArray();
-            
-            return sha256.ComputeHash(combined);
-        }
+    }
 
-        private bool VerifyPasswordHash(string password, byte[] salt, byte[] passwordHash)
+    [GeneratedRegex(@"^[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}$")]
+    private static partial Regex EmailRegex();
+
+    public byte[] GeneratePasswordHash(string password, out byte[] salt)
+    {
+        salt = RandomNumberGenerator.GetBytes(16);
+        using var sha256 = SHA256.Create();
+
+        var combined = Encoding.UTF8.GetBytes(password).Concat(salt).ToArray();
+
+        return sha256.ComputeHash(combined);
+    }
+
+    private bool VerifyPasswordHash(string password, byte[] salt, byte[] passwordHash)
     {
 
         var combined = Encoding.UTF8.GetBytes(password).Concat(salt).ToArray();
@@ -125,4 +125,7 @@
 
         return computedHash.SequenceEqual(passwordHash);
     }
+
+    public async Task<List<UserModel>> GetAllUsersAsync() => await userContext.Users.ToListAsync()
+                                                                                .ConfigureAwait(false);
 }

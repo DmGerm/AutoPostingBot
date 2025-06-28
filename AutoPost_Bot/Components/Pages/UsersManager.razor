@@ -1,0 +1,131 @@
+﻿@page "/usersmanager"
+@using AutoPost_Bot.Models
+@using AutoPost_Bot.Users
+@using AutoMapper
+@using Microsoft.AspNetCore.Authorization
+@inject IUsersRepo UserRepo
+@inject IMapper Mapper
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Administrator,Root")]
+
+<h3>Управление пользователями</h3>
+
+<table class="table table-hover table-bordered mb-1">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Email</th>
+            <th scope="col">Password</th>
+            <th scope="col">Role</th>
+        </tr>
+    </thead>
+
+    @foreach (var item in users.Select((user, index) => new { user, index }))
+    {
+                <tbody>
+            <tr>
+                <th scope="row"
+                    class="text-center
+                        align-middle">
+                    @(item.index + 1)
+                </th>
+                <td>
+                    <div class="input-group input-group-sm mt-0 mb-0">
+                        <input @bind="item.user.Email"
+                               type="text"
+                               class="form-control border-0 bg-transparent"
+                               aria-label="Email input" />
+                    </div>
+
+                </td>
+                <td>
+                    <div class="input-group input-group-sm mt-0 mb-0">
+                        <input @bind="item.user.Password"
+                               type="password"
+                               class="form-control border-0 bg-transparent"
+                               aria-label="Email input" />
+                    </div>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm mt-0 mb-0"
+                            @bind="item.user.RoleId"
+                            aria-label="Role Select">
+
+                        @if (item.user.RoleId == RoleId.Root)
+                        {
+                            <option value="@RoleId.Root">@RoleId.Root</option>
+                        }
+                        else
+                        {
+                            @foreach (var role in Enum.GetValues<RoleId>())
+                            {
+                                if (role != RoleId.Root)
+                                {
+                                    <option value="@role">@role</option>
+                                }
+                            }
+                        }
+                    </select>
+                </td>
+            </tr>
+        </tbody>
+
+    }
+
+
+</table>
+
+<div class="d-flex flex-column pb-2">
+
+<svg @onclick="UserAdd"
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" height="24" 
+    fill="currentColor" 
+    class="bi bi-person-plus ms-2 mb-2" 
+    viewBox="0 0 16 16">
+    <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+    <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5" />
+</svg>
+
+<button type="button"
+        class="btn btn-primary col-4"
+        @onclick="SaveChanges">
+    Сохранить изменения
+</button>
+
+</div>
+
+@code {
+    private List<UserEditModel> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userModels = await UserRepo.GetAllUsersAsync();
+
+        users = userModels
+            .Select(user => Mapper.Map<UserEditModel>(user))
+            .ToList();
+    }
+
+    private void UserAdd(MouseEventArgs args)
+    {
+        try
+        {
+            users.Add(new UserEditModel()
+                {
+                    Email = "",
+                    Password = "",
+                    RoleId = RoleId.User
+                });
+            StateHasChanged();
+        }
+        catch
+        {
+            throw new Exception("Problem with adding new user");
+        }
+    }
+    private void SaveChanges(MouseEventArgs args)
+    {
+        throw new NotImplementedException();
+    }
+}

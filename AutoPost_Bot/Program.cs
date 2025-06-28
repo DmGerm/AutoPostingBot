@@ -3,6 +3,7 @@ using Autofac.Extensions.DependencyInjection;
 using AutoPost_Bot.BotRepo;
 using AutoPost_Bot.Components;
 using AutoPost_Bot.Data;
+using AutoPost_Bot.MappingProfiles;
 using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.ScheduleService;
 using AutoPost_Bot.TelegramGroupsRepo;
@@ -26,13 +27,13 @@ public class Program
 
                 cb.RegisterType<PostsRepo>()
                     .As<IPostsRepo>().InstancePerLifetimeScope();
-                
+
                 cb.RegisterType<UsersRepo>()
                     .As<IUsersRepo>().InstancePerLifetimeScope();
 
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
-                
+
                 Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
                 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
                 var postsFilePath = Path.Combine(dataDir, "posts.db");
@@ -64,16 +65,19 @@ public class Program
             .AddInteractiveServerComponents();
 
         builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-        
+        builder.Services.AddScoped<PasswordHashResolver>();
+
         builder.Services.AddAuthentication("MyCookieAuth")
             .AddCookie("MyCookieAuth", options =>
             {
                 options.LoginPath = "/Login";
+                options.ExpireTimeSpan = TimeSpan.FromDays(30);
+                options.SlidingExpiration = true;
                 /*options.LogoutPath = "/Logout";
                 options.AccessDeniedPath = "/AccessDenied";*/
             });
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddRazorPages();
 
         var app = builder.Build();
 
@@ -92,13 +96,21 @@ public class Program
         };
 
         app.UseHttpsRedirection();
+        app.UseStaticFiles();
+
+        app.UseRouting();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.UseAntiforgery();
 
         app.MapStaticAssets();
+
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
-        
+
+        app.MapRazorPages();
 
         app.Run();
     }

@@ -1,0 +1,30 @@
+﻿@page
+@model AutoPost_Bot.Pages.LoginModel
+@{
+    ViewData["Title"] = "Вход";
+}
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Вход";
+}
+
+<h3>Войти</h3>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div class="input-group mb-3">
+        <span class="input-group-text">@@</span>
+        <input type="text" name="Email" class="form-control" placeholder="Введите электронную почту" value="@Model.Email" required />
+    </div>
+
+    <div class="input-group mb-3">
+        <input type="password" name="Password" class="form-control" placeholder="Введите пароль" required />
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg">Авторизоваться</button>
+</form>
