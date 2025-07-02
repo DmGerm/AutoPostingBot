@@ -158,11 +158,19 @@
             throw new Exception("Problem with adding new user");
         }
     }
-    private void SaveChanges(MouseEventArgs args)
+    private async void SaveChanges(MouseEventArgs args)
     {
         try
         {
-            
+            var userModels = users
+                .Select(user => Mapper.Map<UserModel>(user))
+                .ToList();
+            await UserRepo.UpdateUsersAsync(userModels);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving changes: {ex.Message}");
+            throw;
         }
     }
 }
