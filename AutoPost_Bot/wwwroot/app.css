@@ -80,6 +80,11 @@ h1:focus {
     margin-top: 20px;
 }
 
+.hover-scale:hover {
+    transform: scale(1.2);
+    transition: transform 0.2s ease-in-out;
+}
+
 @media (max-width: 768px) {
     .form-control,
     .btn {

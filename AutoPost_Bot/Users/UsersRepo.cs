@@ -128,4 +128,24 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
 
     public async Task<List<UserModel>> GetAllUsersAsync() => await userContext.Users.ToListAsync()
                                                                                 .ConfigureAwait(false);
+
+    public async Task UpdateUsersAsync(List<UserModel> incomingUsers)
+    {
+        if (incomingUsers == null)
+            throw new ArgumentNullException(nameof(incomingUsers));
+
+        var existingUsers = await _userContext.Users.ToListAsync();
+
+        var incomingIds = incomingUsers.Where(u => u.UserId != Guid.Empty).Select(u => u.UserId).ToHashSet();
+        var usersToRemove = existingUsers.Where(u => !incomingIds.Contains(u.UserId)).ToList();
+
+        if (usersToRemove.Count > 0)
+            _userContext.Users.RemoveRange(usersToRemove);
+
+
+    }
+
+    await _userContext.SaveChangesAsync();
+
+}
 }

@@ -8,6 +8,7 @@ public interface IUsersRepo
     public Task<UserModel> CreateUserAsync(string email, string password, RoleId roleId);
     public Task<List<UserModel>> GetAllUsersAsync();
     public Task<UserModel> UpdateUserAsync(UserModel user);
+    public Task UpdateUsersAsync(List<UserModel> users);
     public Task<UserModel> DeleteUserAsync(UserModel user);
     public Task<UserModel> DeleteUserAsync(string email);
     public Task<UserModel?> FindUserAsync(string email);
