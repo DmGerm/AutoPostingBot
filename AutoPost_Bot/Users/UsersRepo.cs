@@ -142,10 +142,22 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
         if (usersToRemove.Count > 0)
             _userContext.Users.RemoveRange(usersToRemove);
 
-
+        foreach (var user in incomingUsers)
+        {
+            var existingUser = existingUsers.FirstOrDefault(u => u.UserId == user.UserId);
+            if (existingUser != null)
+            {
+                existingUser.Email = user.Email;
+                existingUser.PasswordHash = user.PasswordHash;
+                existingUser.PasswordSalt = user.PasswordSalt;
+                existingUser.RoleId = user.RoleId;
+            }
+            else
+            {
+                user.UserId = Guid.NewGuid();
+                _userContext.Users.Add(user);
+            }
+        }
+        await _userContext.SaveChangesAsync();
     }
-
-    await _userContext.SaveChangesAsync();
-
-}
 }

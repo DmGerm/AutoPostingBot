@@ -15,7 +15,7 @@ namespace AutoPost_Bot.MappingProfiles
 
         public byte[] Resolve(UserEditModel source, UserModel destination, byte[] destMember, ResolutionContext context)
         {
-            if (source.PasswordChanged == false || string.IsNullOrEmpty(source.Password))
+            if (string.IsNullOrEmpty(source.Password))
             {
                 destination.PasswordSalt = source.PasswordSalt;
                 return destination.PasswordHash;
