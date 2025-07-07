@@ -3,6 +3,7 @@ using AutoPost_Bot.Users;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 
 namespace AutoPost_Bot.Pages
@@ -17,9 +18,12 @@ namespace AutoPost_Bot.Pages
         }
 
         [BindProperty]
+        [Required(ErrorMessage = "¬ведите email")]
+        [EmailAddress(ErrorMessage = "¬ведите корректный email")]
         public string Email { get; set; } = "";
 
         [BindProperty]
+        [Required(ErrorMessage = "¬ведите пароль")]
         public string Password { get; set; } = "";
 
         public string? Error { get; set; }
@@ -30,9 +34,12 @@ namespace AutoPost_Bot.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
+            if (!ModelState.IsValid)
             {
-                Error = "¬ведите корректные данные";
+                Error = string.Join("; ", ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage));
+
                 return Page();
             }
 
@@ -44,10 +51,10 @@ namespace AutoPost_Bot.Pages
                 var user = await _usersRepo.LoginUserAsync(Email, Password);
 
                 var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.Email),
-                    new Claim(ClaimTypes.Role, user.RoleId.ToString())
-                };
+            {
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim(ClaimTypes.Role, user.RoleId.ToString())
+            };
 
                 var identity = new ClaimsIdentity(claims, "MyCookieAuth");
                 var principal = new ClaimsPrincipal(identity);

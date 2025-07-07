@@ -35,10 +35,10 @@
                     @(item.index + 1)
                 </th>
                 <td>
-                 @*    TOdo: Добавить валидацию email *@
+                    @* Todo: добавить валидацию email *@
                     <div class="input-group input-group-sm mt-0 mb-0">
                         <input @bind="item.user.Email"
-                               type="text"
+                               type="email"
                                class="form-control border-0 bg-transparent"
                                aria-label="Email input" />
                     </div>
@@ -128,6 +128,10 @@
             if (user.RoleId == RoleId.Administrator)
             {
                 return currentUserRole == RoleId.User; 
+            }
+            if (user.RoleId == RoleId.Root)
+            {
+                return currentUserRole != RoleId.Root;
             }
             return true;
         })

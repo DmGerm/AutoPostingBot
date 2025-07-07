@@ -17,9 +17,10 @@
 
 <form method="post">
     @Html.AntiForgeryToken()
+    <div class="col-4">
     <div class="input-group mb-3">
         <span class="input-group-text">@@</span>
-        <input type="text" name="Email" class="form-control" placeholder="Введите электронную почту" value="@Model.Email" required />
+        <input type="email" name="Email" class="form-control" placeholder="Введите электронную почту" value="@Model.Email" required />
     </div>
 
     <div class="input-group mb-3">
@@ -27,4 +28,5 @@
     </div>
 
     <button type="submit" class="btn btn-primary btn-lg">Авторизоваться</button>
+    </div>
 </form>

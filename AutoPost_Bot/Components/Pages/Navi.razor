@@ -1,6 +1,8 @@
 ﻿@using AutoPost_Bot.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary mb-2">
@@ -27,11 +29,11 @@
                         Меню
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Сменить пароль</a></li>
+                        <li><a class="dropdown-item" href="/changepassword">Сменить пароль</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Выйти</a>
+                    <a class="nav-link" href="/Logout">Выйти</a>
                 </li>
             </ul>
         </div>

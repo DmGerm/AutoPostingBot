@@ -8,7 +8,7 @@ namespace AutoPost_Bot.MappingProfiles
         public UserProfile()
         {
             CreateMap<UserModel, UserEditModel>()
-                .ForMember(dest => dest.Password, opt => opt.MapFrom(src => "*******"));
+                .ForMember(dest => dest.Password, opt => opt.MapFrom(src => ""));
 
             CreateMap<UserEditModel, UserModel>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.MapFrom<PasswordHashResolver>())
