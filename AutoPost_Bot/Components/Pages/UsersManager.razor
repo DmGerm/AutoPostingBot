@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using System.Text.RegularExpressions
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IUsersRepo UserRepo
 @inject IMapper Mapper
@@ -12,7 +13,6 @@
 @attribute [Authorize(Roles = "Administrator,Root")]
 
 <h3>Управление пользователями</h3>
-
 
 <table class="table table-hover table-bordered mb-1">
     <thead>
@@ -27,37 +27,45 @@
 
     @foreach (var item in users.Select((user, index) => new { user, index }))
     {
-                <tbody>
+        <tbody>
             <tr>
-                <th scope="row"
-                    class="text-center
-                        align-middle">
+                <th scope="row" class="text-center align-middle">
                     @(item.index + 1)
                 </th>
                 <td>
-                    @* Todo: добавить валидацию email *@
                     <div class="input-group input-group-sm mt-0 mb-0">
                         <input @bind="item.user.Email"
+                               @onblur="() => EmailCheck(item.user)"
                                type="email"
-                               class="form-control border-0 bg-transparent"
+                               class="form-control border-0 bg-transparent @(!String.IsNullOrEmpty(item.user.EmailError) ? "is-invalid" : "")"
                                aria-label="Email input" />
                     </div>
-
+                    @if (!string.IsNullOrEmpty(item.user.EmailError))
+                    {
+                        <div class="invalid-feedback">
+                            @item.user.EmailError
+                        </div>
+                    }
                 </td>
                 <td>
-                   @*  Todo: Добавить валидацию пароля *@
                     <div class="input-group input-group-sm mt-0 mb-0">
                         <input @bind="item.user.Password"
+                               @onblur="() => PasswordCheck(item.user)"
                                type="password"
-                               class="form-control border-0 bg-transparent"
-                               aria-label="Email input" />
+                               class="form-control border-0 bg-transparent @(!String.IsNullOrEmpty(item.user.PasswordError) ? "is-invalid" : "")"
+                               aria-label="Password input" />
                     </div>
+                    @if (!string.IsNullOrEmpty(item.user.PasswordError))
+                    {
+                        <div class="invalid-feedback">
+                            @item.user.PasswordError
+                        </div>
+                    }
                 </td>
                 <td>
                     <select class="form-select form-select-sm mt-0 mb-0"
                             @bind="item.user.RoleId"
                             aria-label="Role Select">
-
                         @if (item.user.RoleId == RoleId.Root)
                         {
                             <option value="@RoleId.Root">@RoleId.Root</option>
@@ -74,27 +82,19 @@
                         }
                     </select>
                 </td>
-
                 <td class="d-flex justify-content-center">
                     <button type="button"
                             class="btn btn-danger btn-sm"
                             @onclick="() => users.RemoveAt(item.index)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16">
-                            <path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5" />
-                        </svg>
+                        🗑
                     </button>
-                 </td>
-
+                </td>
             </tr>
         </tbody>
-
     }
-
-
 </table>
 
 <div class="d-flex flex-column pb-2">
-
     <svg @onclick="UserAdd"
          xmlns="http://www.w3.org/2000/svg"
          width="24" height="24"
@@ -106,37 +106,23 @@
         <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5" />
     </svg>
 
-<button type="button"
-        class="btn btn-primary col-4"
-        @onclick="SaveChanges">
-    Сохранить изменения
-</button>
-
+    <button type="button"
+            class="btn btn-primary col-4"
+            @onclick="SaveChanges">
+        Сохранить изменения
+    </button>
 </div>
 
 @code {
     private List<UserEditModel> users = new();
     private RoleId currentUserRole = RoleId.User;
 
+    private string emeailCheckPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$";
+    private string passwordCheckPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$";
+
     protected override async Task OnInitializedAsync()
     {
         var userModels = await UserRepo.GetAllUsersAsync();
-
-        users = userModels
-            .Where(user =>
-        {
-            if (user.RoleId == RoleId.Administrator)
-            {
-                return currentUserRole == RoleId.User; 
-            }
-            if (user.RoleId == RoleId.Root)
-            {
-                return currentUserRole != RoleId.Root;
-            }
-            return true;
-        })
-            .Select(user => Mapper.Map<UserEditModel>(user))
-            .ToList();
 
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -145,30 +131,36 @@
         {
             currentUserRole = role;
         }
+
+        users = userModels
+            .Where(user =>
+            {
+                if (user.RoleId == RoleId.Administrator)
+                    return currentUserRole == RoleId.User;
+                if (user.RoleId == RoleId.Root)
+                    return currentUserRole != RoleId.Root;
+                return true;
+            })
+            .Select(user => Mapper.Map<UserEditModel>(user))
+            .ToList();
     }
 
     private void UserAdd(MouseEventArgs args)
     {
-        try
+        users.Add(new UserEditModel()
         {
-            users.Add(new UserEditModel()
-                {
-                    Email = "",
-                    Password = "",
-                    RoleId = RoleId.User
-                });
-            StateHasChanged();
-        }
-        catch
-        {
-            throw new Exception("Problem with adding new user");
-        }
+            Email = "",
+            Password = "",
+            RoleId = RoleId.User
+        });
     }
+
     private async void SaveChanges(MouseEventArgs args)
     {
         try
         {
             var userModels = users
+                .Where(user => string.IsNullOrEmpty(user.EmailError) && string.IsNullOrEmpty(user.PasswordError))
                 .Select(user => Mapper.Map<UserModel>(user))
                 .ToList();
             await UserRepo.UpdateUsersAsync(userModels);
@@ -179,4 +171,34 @@
             throw;
         }
     }
+
+    private void EmailCheck(UserEditModel user)
+    {
+        Regex emailRegex = new Regex(emeailCheckPattern);
+        if (!emailRegex.IsMatch(user.Email))
+        {
+            user.EmailError = "Некорректный формат электронной почты.";
+        }
+        else
+        {
+            user.EmailError = string.Empty;
+        }
+        StateHasChanged();
+    }
+
+    private void PasswordCheck(UserEditModel user)
+    {
+        Regex passwordRegex = new Regex(passwordCheckPattern);
+        if (!passwordRegex.IsMatch(user.Password))
+        {
+            user.PasswordError = "Пароль должен содержать минимум 8 символов, включая заглавную, строчную буквы и цифру.";
+        }
+        else
+        {
+            user.PasswordError = string.Empty;
+        }
+        StateHasChanged();
+    }
+
+
 }

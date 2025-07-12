@@ -1,3 +1,5 @@
+// Ignore Spelling: Repo
+
 using AutoPost_Bot.Models;
 using AutoPost_Bot.Users;
 using Microsoft.AspNetCore.Authentication;
@@ -50,11 +52,17 @@ namespace AutoPost_Bot.Pages
 
                 var user = await _usersRepo.LoginUserAsync(Email, Password);
 
+                if (user == null)
+                {
+                    Error = "Неверный email или пароль.";
+                    return Page();
+                }
+
                 var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, user.RoleId.ToString())
-            };
+                {
+                    new Claim(ClaimTypes.Name, user.Email ?? string.Empty),
+                    new Claim(ClaimTypes.Role, user.RoleId.ToString())
+                };
 
                 var identity = new ClaimsIdentity(claims, "MyCookieAuth");
                 var principal = new ClaimsPrincipal(identity);
