@@ -53,9 +53,26 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
         return newUser;
     }
 
-    public Task<UserModel> UpdateUserAsync(UserModel user)
+    public async Task<UserModel> UpdateUserAsync(UserModel user)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var existingUser = await _userContext.Users.FindAsync(user.UserId)
+                               ?? throw new Exception("User can't be found");
+
+            existingUser.Email = user.Email;
+            existingUser.PasswordHash = user.PasswordHash;
+            existingUser.PasswordSalt = user.PasswordSalt;
+            existingUser.RoleId = user.RoleId;
+
+            await _userContext.SaveChangesAsync();
+            return user;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            throw;
+        }
     }
 
     public Task<UserModel> DeleteUserAsync(UserModel user)

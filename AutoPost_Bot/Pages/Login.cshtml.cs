@@ -26,6 +26,8 @@ namespace AutoPost_Bot.Pages
 
         [BindProperty]
         [Required(ErrorMessage = "¬ведите пароль")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$",
+        ErrorMessage = "ѕароль должен содержать минимум 8 символов, заглавную букву и цифру.")]
         public string Password { get; set; } = "";
 
         public string? Error { get; set; }
