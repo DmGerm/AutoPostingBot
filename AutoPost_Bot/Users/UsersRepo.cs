@@ -57,7 +57,7 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
     {
         try
         {
-            var existingUser = await _userContext.Users.FindAsync(user.UserId)
+            var existingUser = await _userContext.Users.FirstOrDefaultAsync(bUser => bUser.UserId == user.UserId)
                                ?? throw new Exception("User can't be found");
 
             existingUser.Email = user.Email;
@@ -153,28 +153,44 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
 
         var existingUsers = await _userContext.Users.ToListAsync();
 
-        var incomingIds = incomingUsers.Where(u => u.UserId != Guid.Empty).Select(u => u.UserId).ToHashSet();
-        var usersToRemove = existingUsers.Where(u => !incomingIds.Contains(u.UserId)).ToList();
+        var incomingIds = incomingUsers
+            .Where(u => u.UserId != Guid.Empty)
+            .Select(u => u.UserId)
+            .ToHashSet();
+
+        var usersToRemove = existingUsers
+            .Where(u => !incomingIds.Contains(u.UserId))
+            .ToList();
 
         if (usersToRemove.Count > 0)
             _userContext.Users.RemoveRange(usersToRemove);
 
-        foreach (var user in incomingUsers)
+        foreach (var incomingUser in incomingUsers)
         {
-            var existingUser = existingUsers.FirstOrDefault(u => u.UserId == user.UserId);
+            if (incomingUser.UserId == Guid.Empty)
+            {
+                incomingUser.UserId = Guid.NewGuid();
+                _userContext.Users.Add(incomingUser);
+                continue;
+            }
+
+            var existingUser = existingUsers
+                .FirstOrDefault(u => u.UserId == incomingUser.UserId);
+
             if (existingUser != null)
             {
-                existingUser.Email = user.Email;
-                existingUser.PasswordHash = user.PasswordHash;
-                existingUser.PasswordSalt = user.PasswordSalt;
-                existingUser.RoleId = user.RoleId;
+                existingUser.Email = incomingUser.Email;
+                existingUser.PasswordHash = incomingUser.PasswordHash;
+                existingUser.PasswordSalt = incomingUser.PasswordSalt;
+                existingUser.RoleId = incomingUser.RoleId;
             }
             else
             {
-                user.UserId = Guid.NewGuid();
-                _userContext.Users.Add(user);
+                incomingUser.UserId = Guid.NewGuid();
+                _userContext.Users.Add(incomingUser);
             }
         }
+
         await _userContext.SaveChangesAsync();
     }
 }
