@@ -49,17 +49,17 @@ namespace AutoPost_Bot.ScheduleService
                                 try
                                 {
                                     await botClient.SendMessage(
-                                        chatId: post.GroupID,
-                                        text: post.PostText ?? string.Empty,
-                                        cancellationToken: stoppingToken
-                                    );
+                                                      chatId: post.GroupID,
+                                                      text: post.PostText ?? string.Empty,
+                                                      cancellationToken: stoppingToken
+                                                  );
 
                                 }
                                 catch (ApiRequestException ex)
                                 {
                                     if (ex.ErrorCode == 404)
                                     {
-                                        Console.WriteLine($"Группа с ID {post.GroupID} не найдена. Удаление группы из БД.");
+                                        Console.WriteLine($"Группа с  ID {post.GroupID} не найдена. Удаление группы из БД.");
                                         await groupRepo.RemoveGroupAsync(post.GroupID.Value);
                                     }
                                     else
