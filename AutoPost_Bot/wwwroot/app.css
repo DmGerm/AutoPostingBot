@@ -92,3 +92,11 @@ h1:focus {
     }
 }
 
+@media (min-width: 641px) {
+    article{
+        padding-left: 2rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+
