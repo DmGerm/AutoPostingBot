@@ -35,7 +35,7 @@ namespace AutoPost_Bot.ScheduleService
                     continue;
                 }
 
-                var now = DateTime.Now;
+                var now = DateTime.UtcNow.AddHours(3);
                 var posts = await postRepo.GetPostsAsync();
 
                 if (botClient is not null)

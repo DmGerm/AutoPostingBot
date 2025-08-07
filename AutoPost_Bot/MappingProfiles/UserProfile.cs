@@ -12,7 +12,10 @@ namespace AutoPost_Bot.MappingProfiles
 
             CreateMap<UserEditModel, UserModel>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.MapFrom<PasswordHashResolver>())
-                .ForMember(dest => dest.PasswordSalt, opt => opt.Ignore());
+                .ForMember(dest => dest.PasswordSalt, opt => opt.MapFrom((src, dest, destMember, ctx) =>
+                {
+                    return string.IsNullOrEmpty(src.Password) ? dest.PasswordSalt : null;
+                }));
         }
     }
 }

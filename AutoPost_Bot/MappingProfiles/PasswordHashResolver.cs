@@ -15,8 +15,7 @@ public class PasswordHashResolver : IValueResolver<UserEditModel, UserModel, byt
     {
         if (string.IsNullOrEmpty(source.Password))
         {
-            destination.PasswordSalt = source.PasswordSalt;
-            return destination.PasswordHash;
+            return destMember;
         }
 
         var hash = _repo.GeneratePasswordHash(source.Password, out var salt);
