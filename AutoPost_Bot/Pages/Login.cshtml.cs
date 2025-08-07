@@ -62,8 +62,8 @@ namespace AutoPost_Bot.Pages
 
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.Name, user.Email ?? string.Empty),
-                    new Claim(ClaimTypes.Role, user.RoleId.ToString())
+                    new(ClaimTypes.Name, user.Email ?? string.Empty),
+                    new(ClaimTypes.Role, user.RoleId.ToString())
                 };
 
                 var identity = new ClaimsIdentity(claims, "MyCookieAuth");

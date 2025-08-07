@@ -159,8 +159,8 @@ public partial class UsersRepo(UserContext userContext) : IUsersRepo
             .ToHashSet();
 
         var usersToRemove = existingUsers
-            .Where(u => !incomingIds.Contains(u.UserId))
-            .ToList();
+                                    .Where(u => !incomingIds.Contains(u.UserId) && u.RoleId != RoleId.Root)
+                                    .ToList();
 
         if (usersToRemove.Count > 0)
             _userContext.Users.RemoveRange(usersToRemove);
