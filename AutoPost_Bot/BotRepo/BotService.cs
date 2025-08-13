@@ -54,6 +54,8 @@ namespace AutoPost_Bot.BotRepo
 
                 bot.BotClient = new TelegramBotClient(botToken, cancellationToken: cts.Token);
 
+                await bot.BotClient.DeleteWebhook();
+
                 bot.Token = botToken;
 
                 var me = await bot.BotClient.GetMe();

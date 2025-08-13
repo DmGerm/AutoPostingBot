@@ -283,6 +283,7 @@
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Ошибка при сохранении постов: {ex.Message} {ex.InnerException.StackTrace}");
             HandleError("Ошибка сохранения: " + ex.Message);
         }
     }

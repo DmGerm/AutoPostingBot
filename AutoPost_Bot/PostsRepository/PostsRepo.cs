@@ -51,6 +51,8 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
             .ToListAsync();
 
         postsContext.Posts.RemoveRange(existing);
+        await postsContext.SaveChangesAsync();
+
         await postsContext.AddRangeAsync(postsList);
         await postsContext.SaveChangesAsync();
     }

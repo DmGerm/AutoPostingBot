@@ -1,4 +1,4 @@
-// Ignore Spelling: Repo
+п»ї// Ignore Spelling: Repo
 
 using AutoPost_Bot.Models;
 using AutoPost_Bot.Users;
@@ -20,14 +20,14 @@ namespace AutoPost_Bot.Pages
         }
 
         [BindProperty]
-        [Required(ErrorMessage = "Введите email")]
-        [EmailAddress(ErrorMessage = "Введите корректный email")]
+        [Required(ErrorMessage = "Р’РІРµРґРёС‚Рµ email")]
+        [EmailAddress(ErrorMessage = "Р’РІРµРґРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ email")]
         public string Email { get; set; } = "";
 
         [BindProperty]
-        [Required(ErrorMessage = "Введите пароль")]
+        [Required(ErrorMessage = "Р’РІРµРґРёС‚Рµ РїР°СЂРѕР»СЊ")]
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{8,}$",
-        ErrorMessage = "Пароль должен содержать минимум 8 символов, заглавную букву и цифру.")]
+        ErrorMessage = "РџР°СЂРѕР»СЊ РґРѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ РјРёРЅРёРјСѓРј 8 СЃРёРјРІРѕР»РѕРІ, Р·Р°РіР»Р°РІРЅСѓСЋ Р±СѓРєРІСѓ Рё С†РёС„СЂСѓ.")]
         public string Password { get; set; } = "";
 
         public string? Error { get; set; }
@@ -56,7 +56,7 @@ namespace AutoPost_Bot.Pages
 
                 if (user == null)
                 {
-                    Error = "Неверный email или пароль.";
+                    Error = "РќРµРІРµСЂРЅС‹Р№ email РёР»Рё РїР°СЂРѕР»СЊ.";
                     return Page();
                 }
 
@@ -75,7 +75,7 @@ namespace AutoPost_Bot.Pages
             }
             catch (Exception ex)
             {
-                Error = "Ошибка входа: " + ex.Message;
+                Error = "РћС€РёР±РєР° РІС…РѕРґР°: " + ex.Message;
                 return Page();
             }
         }
