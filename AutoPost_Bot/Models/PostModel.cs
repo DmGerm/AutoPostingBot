@@ -7,7 +7,7 @@
         public long? GroupID { get; set; }
         public string? BotID { get; set; }
         public DateTime PostDateTime { get; set; }
-        public HashSet<Days>? Days { get; set; }
+        public Days Days { get; set; }
         public int RepeatDays { get; set; }
         public int RepeatHours { get; set; }
         public int RepeatMinutes { get; set; }
