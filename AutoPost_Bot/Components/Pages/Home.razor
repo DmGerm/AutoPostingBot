@@ -134,13 +134,29 @@
 
                             <div class="btn-group btn-group-sm" role="group" aria-label="Repeat days checkboxes">
                                 <input type="checkbox" class="btn-check" id="btncheck1" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="btncheck1">Checkbox 1</label>
+                                <label class="btn btn-outline-primary" for="btncheck1">Пн</label>
 
                                 <input type="checkbox" class="btn-check" id="btncheck2" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="btncheck2">Checkbox 2</label>
+                                <label class="btn btn-outline-primary" for="btncheck2">Вт</label>
 
-                                <input type="checkbox" class="btn-check" id="btncheck3" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="btncheck3">Checkbox 3</label>
+                                <input type="checkbox"
+                                       class="btn-check"
+                                       id="btncheck3"
+                                       autocomplete="off"
+                                       @(IsDayChecked("Ср") ? "checked" : "")/>
+                                <label class="btn btn-outline-primary" for="btncheck3">Ср</label>
+
+                                <input type="checkbox" class="btn-check" id="btncheck4" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck4">Чт</label>
+
+                                <input type="checkbox" class="btn-check" id="btncheck5" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck5">Пт</label>
+
+                                <input type="checkbox" class="btn-check" id="btncheck6" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck6">Сб</label>
+
+                                <input type="checkbox" class="btn-check" id="btncheck7" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btncheck7">Вс</label>
                             </div>
                         </div>
                     </div>
@@ -356,6 +372,11 @@
         }
 
         return Task.CompletedTask;
+    }
+
+    private bool IsDayChecked(string day)
+    {
+        throw new NotImplementedException();
     }
 
 }
