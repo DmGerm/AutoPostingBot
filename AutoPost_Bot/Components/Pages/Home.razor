@@ -143,8 +143,10 @@
                                        class="btn-check"
                                        id="btncheck3"
                                        autocomplete="off"
-                                       @(IsDayChecked("Ср") ? "checked" : "")/>
-                                <label class="btn btn-outline-primary" for="btncheck3">Ср</label>
+                                       @(IsDayChecked(post, Days.Wednesday) ? "checked" : "")/>
+                                <label class="btn btn-outline-primary"
+                                       for="btncheck3"
+                                       @onclick="() => DayAddOrRemove(post, Days.Wednesday)">Ср</label>
 
                                 <input type="checkbox" class="btn-check" id="btncheck4" autocomplete="off">
                                 <label class="btn btn-outline-primary" for="btncheck4">Чт</label>
@@ -374,9 +376,27 @@
         return Task.CompletedTask;
     }
 
-    private bool IsDayChecked(string day)
+    private bool IsDayChecked(PostModel post, Days day)
     {
-        throw new NotImplementedException();
+        if (post.Days.HasFlag(day))
+        {
+            return true;
+        }
+        else return false;
+    }
+
+    private Task DayAddOrRemove(PostModel post, Days day)
+    {
+        if (post.Days.HasFlag(day))
+        {
+            post.Days &= ~day;
+        }
+        else
+        {
+            post.Days |= day;
+        }
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 
 }
