@@ -1,4 +1,5 @@
 ﻿using AutoPost_Bot.BotRepo;
+using AutoPost_Bot.Models;
 using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.TelegramGroupsRepo;
 using Telegram.Bot;
@@ -36,6 +37,8 @@ namespace AutoPost_Bot.ScheduleService
                 }
 
                 var now = DateTime.UtcNow.AddHours(3);
+                var currentDayOfWeek = ConvertDayOfWeek(DateTime.Now.DayOfWeek);
+
                 var posts = await postRepo.GetPostsAsync();
 
                 if (botClient is not null)
@@ -44,7 +47,7 @@ namespace AutoPost_Bot.ScheduleService
                     {
                         if (now >= post.PostDateTime)
                         {
-                            if (post.GroupID != 0 && post.GroupID is not null)
+                            if (post.GroupID != 0 && post.GroupID is not null && post.Days.HasFlag(currentDayOfWeek))
                             {
                                 try
                                 {
@@ -104,6 +107,20 @@ namespace AutoPost_Bot.ScheduleService
                 {
                 }
             }
+        }
+        private Days ConvertDayOfWeek(DayOfWeek dayOfWeek)
+        {
+            return dayOfWeek switch
+            {
+                DayOfWeek.Monday    => Days.Monday,
+                DayOfWeek.Tuesday   => Days.Tuesday,
+                DayOfWeek.Wednesday => Days.Wednesday,
+                DayOfWeek.Thursday  => Days.Thursday,
+                DayOfWeek.Friday    => Days.Friday,
+                DayOfWeek.Saturday  => Days.Saturday,
+                DayOfWeek.Sunday    => Days.Sunday,
+                _ => Days.None
+            };
         }
     }
 }

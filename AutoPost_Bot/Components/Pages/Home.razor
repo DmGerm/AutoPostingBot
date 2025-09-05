@@ -133,31 +133,60 @@
                             <label class="form-label mb-1">Выберите дни повторения</label>
 
                             <div class="btn-group btn-group-sm" role="group" aria-label="Repeat days checkboxes">
-                                <input type="checkbox" class="btn-check" id="btncheck1" autocomplete="off">
+                                <input type="checkbox"
+                                       class="btn-check"
+                                       id="btncheck1"
+                                       autocomplete="off"
+                                       checked="@IsDayChecked(post, Days.Monday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Monday)">
                                 <label class="btn btn-outline-primary" for="btncheck1">Пн</label>
 
-                                <input type="checkbox" class="btn-check" id="btncheck2" autocomplete="off">
+                                <input type="checkbox"
+                                       class="btn-check" id="btncheck2"
+                                       autocomplete="off"
+                                       checked="@IsDayChecked(post, Days.Tuesday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Tuesday)">
                                 <label class="btn btn-outline-primary" for="btncheck2">Вт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
                                        id="btncheck3"
                                        autocomplete="off"
-                                       @(IsDayChecked(post, Days.Wednesday) ? "checked" : "")/>
+                                       checked="@IsDayChecked(post, Days.Wednesday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Wednesday)" />
                                 <label class="btn btn-outline-primary"
-                                       for="btncheck3"
-                                       @onclick="() => DayAddOrRemove(post, Days.Wednesday)">Ср</label>
+                                       for="btncheck3">Ср</label>
 
-                                <input type="checkbox" class="btn-check" id="btncheck4" autocomplete="off">
+                                <input type="checkbox"
+                                       class="btn-check"
+                                       id="btncheck4"
+                                       autocomplete="off"
+                                       checked="@IsDayChecked(post, Days.Thursday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Thursday)">
                                 <label class="btn btn-outline-primary" for="btncheck4">Чт</label>
 
-                                <input type="checkbox" class="btn-check" id="btncheck5" autocomplete="off">
+                                <input type="checkbox"
+                                       class="btn-check"
+                                       id="btncheck5"
+                                       autocomplete="off"
+                                       checked="@IsDayChecked(post, Days.Friday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Friday)">
                                 <label class="btn btn-outline-primary" for="btncheck5">Пт</label>
 
-                                <input type="checkbox" class="btn-check" id="btncheck6" autocomplete="off">
+                                <input type="checkbox"
+                                       class="btn-check"
+                                       id="btncheck6"
+                                       autocomplete="off"
+                                       checked="@IsDayChecked(post, Days.Saturday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Saturday)">
                                 <label class="btn btn-outline-primary" for="btncheck6">Сб</label>
 
-                                <input type="checkbox" class="btn-check" id="btncheck7" autocomplete="off">
+                                <input type="checkbox"
+                                       class="btn-check"
+                                       id="btncheck7"
+                                       autocomplete="off"
+                                       checked="@IsDayChecked(post, Days.Friday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Friday)">
                                 <label class="btn btn-outline-primary" for="btncheck7">Вс</label>
                             </div>
                         </div>
@@ -380,9 +409,13 @@
     {
         if (post.Days.HasFlag(day))
         {
+            Console.WriteLine("Has flag true");
+            Console.WriteLine(day);
             return true;
         }
-        else return false;
+        Console.WriteLine("Has flag false");
+        Console.WriteLine(day);
+        return false;
     }
 
     private Task DayAddOrRemove(PostModel post, Days day)
