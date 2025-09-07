@@ -185,8 +185,8 @@
                                        class="btn-check"
                                        id="btncheck7"
                                        autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Friday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Friday)">
+                                       checked="@IsDayChecked(post, Days.Sunday)"
+                                       @onchange="() => DayAddOrRemove(post, Days.Sunday)">
                                 <label class="btn btn-outline-primary" for="btncheck7">Вс</label>
                             </div>
                         </div>
@@ -409,12 +409,8 @@
     {
         if (post.Days.HasFlag(day))
         {
-            Console.WriteLine("Has flag true");
-            Console.WriteLine(day);
             return true;
         }
-        Console.WriteLine("Has flag false");
-        Console.WriteLine(day);
         return false;
     }
 

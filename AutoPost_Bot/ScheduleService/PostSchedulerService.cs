@@ -38,7 +38,6 @@ namespace AutoPost_Bot.ScheduleService
 
                 var now = DateTime.UtcNow.AddHours(3);
                 var currentDayOfWeek = ConvertDayOfWeek(DateTime.Now.DayOfWeek);
-
                 var posts = await postRepo.GetPostsAsync();
 
                 if (botClient is not null)
