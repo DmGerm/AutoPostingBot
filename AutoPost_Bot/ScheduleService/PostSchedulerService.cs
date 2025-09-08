@@ -22,7 +22,7 @@ namespace AutoPost_Bot.ScheduleService
 
                 try
                 {
-                    botClient = await botService.GetBotClient();
+                    botClient = await botService.GetBotClients();
                 }
                 catch
                 {

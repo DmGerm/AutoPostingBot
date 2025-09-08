@@ -1,6 +1,7 @@
 ﻿using AutoPost_Bot.Handlers;
 using AutoPost_Bot.Models;
 using AutoPost_Bot.TelegramGroupsRepo;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 
@@ -8,40 +9,44 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotService(IGroupRepo groupRepo) : IBotService
     {
-        private CancellationTokenSource? cts;
-        private readonly UpdateHandler updateHandler = new(groupRepo);
-        private readonly BotModel bot = new() { Id = new Guid() };
+        private readonly UpdateHandler _updateHandler = new(groupRepo);
+        private readonly Dictionary<Guid, Tuple<BotModel, CancellationTokenSource?>> _botModels = [];
 
-        public async Task<TelegramBotClient> GetBotClient()
+        async Task<List<TelegramBotClient?>> IBotService.GetBotClients()
         {
-            if (bot.BotClient == null)
+            if (_botModels is { Count: 0 })
                 throw new InvalidOperationException("Bot has not been started yet.");
 
-            return await Task.FromResult(bot.BotClient);
+            return await Task.FromResult(_botModels.Values.Select(botModel => botModel.Item1.BotClient).ToList());
         }
 
-        public Task StopBot()
+        public Task StopBot(Guid botId)
         {
             try
             {
-                if (bot.BotClient == null)
+                if (_botModels is { Count: 0 })
                     throw new InvalidOperationException("Bot has not been started yet.");
 
-                cts?.Cancel();
+                var botEntry = _botModels.FirstOrDefault(entry => entry.Value.Item1.Id.Equals(botId));
 
-                bot.BotClient = null;
-                bot.IsActive = false;
+                botEntry.Value.Item2?.Cancel();
+
+                botEntry.Value.Item1.BotClient = null;
+                botEntry.Value.Item1.IsActive = false;
+
+                _botModels.Remove(botEntry.Key);
 
                 return Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Exception in StopBot: {ex.Message}");
+                Console.WriteLine($"Exception in StopBot: {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
-                return Task.CompletedTask;
+                throw;
             }
         }
 
+        //ToDo: Переделываем на Tuple, двигаемся дальше
         public async Task<TelegramBotClient> StartBot(string botToken)
         {
             try
@@ -50,24 +55,28 @@ namespace AutoPost_Bot.BotRepo
                 {
                     throw new InvalidOperationException("Bot token is not provided!");
                 }
-                cts = new CancellationTokenSource();
 
-                bot.BotClient = new TelegramBotClient(botToken, cancellationToken: cts.Token);
+                var botId = Guid.NewGuid();
+                var tokenSource = new CancellationTokenSource();
 
-                await bot.BotClient.DeleteWebhook();
+                _botModels.Add(new BotModel() {Id = botId, BotClient = new TelegramBotClient(botToken, new HttpClient(), tokenSource.Token)},
+                    tokenSource);
 
-                bot.Token = botToken;
+                _botModels.Keys.FirstOrDefault(bot => bot.Id.Equals(botId))
+                    .BotClient.DeleteWebhook();
 
-                var me = await bot.BotClient.GetMe();
+                _botModels.Token = botToken;
 
-                bot.IsActive = true;
+                var me = await _botModels.BotClient.GetMe();
 
-                bot.BotClient.OnUpdate += updateHandler.OnUpdate;
-                bot.BotClient.OnError += OnError;
+                _botModels.IsActive = true;
+
+                _botModels.BotClient.OnUpdate += _updateHandler.OnUpdate;
+                _botModels.BotClient.OnError += OnError;
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
-                return bot.BotClient;
+                return _botModels.BotClient;
             }
             catch (Exception ex)
             {
@@ -87,15 +96,15 @@ namespace AutoPost_Bot.BotRepo
             });
         }
 
-        public bool IsBotActive() => bot.IsActive;
+        public bool IsBotActive() => _botModels.IsActive;
 
-        public string GetBotToken() => bot.Token;
+        public string GetBotToken() => _botModels.Token;
 
         public void SetBotToken(string botToken)
         {
             try
             {
-                bot.Token = botToken;
+                _botModels.Token = botToken;
             }
             catch
             {
