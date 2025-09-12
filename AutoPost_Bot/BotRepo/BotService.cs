@@ -1,12 +1,12 @@
 ﻿using AutoPost_Bot.Handlers;
 using AutoPost_Bot.Models;
 using AutoPost_Bot.TelegramGroupsRepo;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 
 namespace AutoPost_Bot.BotRepo
 {
+    //Todo: Переделвыем структуру хранения данных о ботах на БД - начать с сущностей, далее все манипуляции данный класс будет проводить с базой, а не со словарем.
     public class BotService(IGroupRepo groupRepo) : IBotService
     {
         private readonly UpdateHandler _updateHandler = new(groupRepo);
@@ -46,7 +46,7 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        //ToDo: Переделываем на Tuple, двигаемся дальше
+
         public async Task<TelegramBotClient> StartBot(string botToken)
         {
             try
@@ -59,24 +59,26 @@ namespace AutoPost_Bot.BotRepo
                 var botId = Guid.NewGuid();
                 var tokenSource = new CancellationTokenSource();
 
-                _botModels.Add(new BotModel() {Id = botId, BotClient = new TelegramBotClient(botToken, new HttpClient(), tokenSource.Token)},
-                    tokenSource);
+                _botModels.Add(botId, new Tuple<BotModel, CancellationTokenSource?>(new BotModel()
+                {
+                    Id = botId, BotClient = new TelegramBotClient(botToken, new HttpClient(), tokenSource.Token)
+                }, tokenSource));
 
-                _botModels.Keys.FirstOrDefault(bot => bot.Id.Equals(botId))
-                    .BotClient.DeleteWebhook();
+               if(!_botModels.TryGetValue(botId, out var botModel))
+               {
+                   throw new InvalidOperationException("Bot with this id has not been started yet.");
+               }
+               botModel.Item1.IsActive = true;
 
-                _botModels.Token = botToken;
+                var me = await (botModel.Item1.BotClient
+                                ?? throw new InvalidOperationException()).GetMe(cancellationToken: tokenSource.Token);
 
-                var me = await _botModels.BotClient.GetMe();
-
-                _botModels.IsActive = true;
-
-                _botModels.BotClient.OnUpdate += _updateHandler.OnUpdate;
-                _botModels.BotClient.OnError += OnError;
+                botModel.Item1.BotClient.OnUpdate += _updateHandler.OnUpdate;
+                botModel.Item1.BotClient.OnError += OnError;
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
-                return _botModels.BotClient;
+                return botModel.Item1.BotClient;
             }
             catch (Exception ex)
             {
@@ -95,7 +97,7 @@ namespace AutoPost_Bot.BotRepo
                 Console.WriteLine(exception.StackTrace);
             });
         }
-
+        //ToDo: Переделываем на Tuple, двигаемся дальше
         public bool IsBotActive() => _botModels.IsActive;
 
         public string GetBotToken() => _botModels.Token;
