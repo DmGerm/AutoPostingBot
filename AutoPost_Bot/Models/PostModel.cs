@@ -5,7 +5,6 @@
         public Guid Id { get; set; }
         public string? PostText { get; set; }
         public long? GroupID { get; set; }
-        public string? BotID { get; set; }
         public DateTime PostDateTime { get; set; }
         public Days Days { get; set; }
         public int RepeatDays { get; set; }
