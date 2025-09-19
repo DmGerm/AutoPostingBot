@@ -7,8 +7,21 @@ namespace AutoPost_Bot.Data
     {
         public DbSet<PostModel> Posts { get; set; }
         public DbSet<GroupModel> Groups { get; set; }
+        public DbSet<BotModel> Bots { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<BotModel>(bot =>
+            {
+                bot.HasKey(x => x.Token).HasName("Bot_token");
+                bot.Property(x => x.Token).HasColumnType("TEXT")
+                                      .ValueGeneratedNever();
+                bot.HasIndex(x => x.Token).IsUnique().HasDatabaseName("IX_Bots_Token");
+                bot.HasMany(b => b.Posts)
+                   .WithOne(p => p.Bot)
+                   .HasForeignKey(p => p.BotToken)
+                   .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<PostModel>(post =>
             {
                 post.HasKey(x => x.Id).HasName("Post_Id");

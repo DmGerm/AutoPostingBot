@@ -1,18 +1,31 @@
-﻿using AutoPost_Bot.Handlers;
-using AutoPost_Bot.Models;
+﻿using AutoPost_Bot.Data;
+using AutoPost_Bot.Handlers;
 using AutoPost_Bot.TelegramGroupsRepo;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class BotService(IGroupRepo groupRepo) : IBotService
+    public class BotService() : IBotService
     {
         private CancellationTokenSource? cts;
-        private readonly UpdateHandler updateHandler = new(groupRepo);
-        private readonly BotModel bot = new() { Id = new Guid() };
+        private readonly UpdateHandler? updateHandler;
+        private readonly PostsContext? _postContext;
+        private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _bots;
+        private event Action<string, bool>? BotStatusChanged;
 
-        public async Task<TelegramBotClient> GetBotClient()
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext) : this()
+        {
+            updateHandler = new(groupRepo);
+            _postContext = postsContext;
+
+
+            _bots = _postContext.Bots.Where(bot => bot.IsActive)
+                 .ToDictionary(bot => bot.Token, bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource()));
+        }
+
+        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
+        public async Task<TelegramBotClient> GetBotClient(string botToken)
         {
             if (bot.BotClient == null)
                 throw new InvalidOperationException("Bot has not been started yet.");
@@ -20,7 +33,7 @@ namespace AutoPost_Bot.BotRepo
             return await Task.FromResult(bot.BotClient);
         }
 
-        public Task StopBot()
+        public Task StopBot(string botToken)
         {
             try
             {
