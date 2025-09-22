@@ -12,7 +12,7 @@ namespace AutoPost_Bot.BotRepo
         private readonly UpdateHandler? updateHandler;
         private readonly PostsContext? _postContext;
         private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _bots;
-        private event Action<string, bool>? BotStatusChanged;
+        public event Action<string, bool>? BotStatusChanged;
 
         public BotService(IGroupRepo groupRepo, PostsContext postsContext)
         {
@@ -47,7 +47,6 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
         public Task StopBot(string botToken)
         {
             try
@@ -78,6 +77,7 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
+        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
         public async Task<TelegramBotClient> StartBot(string botToken)
         {
             try

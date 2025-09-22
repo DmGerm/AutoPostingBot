@@ -10,7 +10,6 @@ namespace AutoPost_Bot.BotRepo
         public bool IsBotActive();
         public string GetBotToken();
         public void SetBotToken(string botToken);
-        public Action<string, bool>? BotStatusChanged { get; set; }
-
+        public event Action<string, bool>? BotStatusChanged;
     }
 }
