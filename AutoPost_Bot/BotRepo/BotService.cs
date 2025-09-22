@@ -24,26 +24,49 @@ namespace AutoPost_Bot.BotRepo
                  .ToDictionary(bot => bot.Token, bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource()));
         }
 
-        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
         public async Task<TelegramBotClient> GetBotClient(string botToken)
         {
-            if (bot.BotClient == null)
-                throw new InvalidOperationException("Bot has not been started yet.");
+            if (string.IsNullOrEmpty(botToken))
+                throw new InvalidOperationException("Bot token is not provided!");
 
-            return await Task.FromResult(bot.BotClient);
+            if (_postContext is null)
+                throw new InvalidOperationException("Database context is not available.");
+            try
+            {
+                var bot = _bots?.GetValueOrDefault(botToken);
+
+                if (bot == null)
+                    throw new InvalidOperationException("Bot has not been started yet.");
+                return await Task.FromResult(bot.Value.Client);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception in GetBotClient: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                throw;
+            }
         }
 
+        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
         public Task StopBot(string botToken)
         {
             try
             {
-                if (bot.BotClient == null)
+                if (string.IsNullOrEmpty(botToken))
+                    throw new InvalidOperationException("Bot token is not provided!");
+
+                var bot = _bots?.GetValueOrDefault(botToken);
+
+                if (bot == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
 
                 cts?.Cancel();
 
-                bot.BotClient = null;
-                bot.IsActive = false;
+                bot.Value.Cts.Cancel();
+
+                BotStatusChanged?.Invoke(botToken, false);
+
+                _bots?.Remove(botToken);
 
                 return Task.CompletedTask;
             }
