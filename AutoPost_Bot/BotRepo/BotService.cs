@@ -6,7 +6,7 @@ using Telegram.Bot.Polling;
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class BotService() : IBotService
+    public class BotService : IBotService
     {
         private CancellationTokenSource? cts;
         private readonly UpdateHandler? updateHandler;
@@ -14,7 +14,7 @@ namespace AutoPost_Bot.BotRepo
         private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _bots;
         private event Action<string, bool>? BotStatusChanged;
 
-        public BotService(IGroupRepo groupRepo, PostsContext postsContext) : this()
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext)
         {
             updateHandler = new(groupRepo);
             _postContext = postsContext;
