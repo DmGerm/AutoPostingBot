@@ -2,14 +2,19 @@
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class BotData(PostsContext postsContext, IBotService botService) : IBotData
+    public class BotData : IBotData
     {
-        private readonly PostsContext _postContext = postsContext;
-        private readonly IBotService _botService = botService;
+        private readonly PostsContext _postContext;
+        private readonly IBotService _botService;
+        public BotData(PostsContext postsContext, IBotService botService)
+        {
+            _postContext = postsContext;
+            _botService = botService;
+            _botService.BotStatusChanged += UpdateBotStatusInDatabase;
+        }
 
         private void UpdateBotStatus(string botToken, bool botStatus)
         {
-            _botService.BotStatusChanged += UpdateBotStatusInDatabase;
             if (_postContext is null)
                 throw new InvalidOperationException("Database context is not available.");
 

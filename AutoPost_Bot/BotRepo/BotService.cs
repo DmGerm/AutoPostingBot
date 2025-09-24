@@ -19,9 +19,13 @@ namespace AutoPost_Bot.BotRepo
             updateHandler = new(groupRepo);
             _postContext = postsContext;
 
+            _bots = _postContext.Bots
+                .Where(bot => bot.IsActive)
+                .ToDictionary(
+                    bot => bot.Token,
+                    bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource())
+                );
 
-            _bots = _postContext.Bots.Where(bot => bot.IsActive)
-                 .ToDictionary(bot => bot.Token, bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource()));
         }
 
         public async Task<TelegramBotClient> GetBotClient(string botToken)
@@ -77,7 +81,6 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
         public async Task<TelegramBotClient> StartBot(string botToken)
         {
             try
@@ -86,24 +89,37 @@ namespace AutoPost_Bot.BotRepo
                 {
                     throw new InvalidOperationException("Bot token is not provided!");
                 }
-                cts = new CancellationTokenSource();
 
-                bot.BotClient = new TelegramBotClient(botToken, cancellationToken: cts.Token);
+                if (_bots is null)
+                {
+                    throw new InvalidOperationException("Bots dictionary is not initialized.");
+                }
 
-                await bot.BotClient.DeleteWebhook();
+                if (!_bots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource())))
+                {
+                    throw new InvalidOperationException("Bot is already started.");
+                }
 
-                bot.Token = botToken;
+                if (!_bots.TryGetValue(botToken, out var botValue))
+                {
+                    throw new InvalidOperationException("Failed to retrieve the bot after adding it.");
+                }
 
-                var me = await bot.BotClient.GetMe();
+                var me = await botValue.Client.GetMe();
 
-                bot.IsActive = true;
+                BotStatusChanged?.Invoke(botToken, true);
 
-                bot.BotClient.OnUpdate += updateHandler.OnUpdate;
-                bot.BotClient.OnError += OnError;
+                if (updateHandler is null)
+                {
+                    throw new InvalidOperationException("Update handler is not initialized.");
+                }
+
+                botValue.Client.OnUpdate += updateHandler.OnUpdate;
+                botValue.Client.OnError += OnError;
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
-                return bot.BotClient;
+                return botValue.Client;
             }
             catch (Exception ex)
             {
@@ -123,6 +139,7 @@ namespace AutoPost_Bot.BotRepo
             });
         }
 
+        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
         public bool IsBotActive() => bot.IsActive;
 
         public string GetBotToken() => bot.Token;
