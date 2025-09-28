@@ -8,7 +8,7 @@
     networks:
       - nextcloud-aio
     volumes:
-      - autopost_data:/app/DbData
+      - autopost_data:/app/DbData:rw
 
 networks:
   nextcloud-aio:
