@@ -33,8 +33,8 @@ public class Program
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
 
-                Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "data"));
-                var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
+                Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "DbData"));
+                var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "DbData");
                 var postsFilePath = Path.Combine(dataDir, "posts.db");
                 var postConnectionString =
                     $"Data Source={postsFilePath};Cache=Shared;Mode=ReadWriteCreate;Foreign Keys=True;Pooling=True";
