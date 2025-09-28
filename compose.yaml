@@ -1,7 +1,18 @@
 ﻿services:
   autopost_bot:
     image: autopost_bot
+    container_name: autopost_bot  
     build:
       context: .
       dockerfile: AutoPost_Bot/Dockerfile
+    networks:
+      - nextcloud-aio
+    volumes:
+      - autopost_data:/app/DbData
 
+networks:
+  nextcloud-aio:
+    external: true
+
+volumes:
+  autopost_data:
