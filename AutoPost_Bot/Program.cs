@@ -94,6 +94,27 @@ public class Program
             e.SetObserved();
         };
 
+        using (var scope = app.Services.CreateScope())
+        {
+            List<DbContext> db = new()
+            {
+                scope.ServiceProvider.GetRequiredService<PostsContext>(),
+                scope.ServiceProvider.GetRequiredService<UserContext>()
+            };
+            db.ForEach(dbContext =>
+            {
+                try
+                {
+                    dbContext.Database.Migrate();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Exception during migration: {ex.Message}");
+                    Console.WriteLine(ex.StackTrace);
+                }
+            });
+        }
+
         app.UseHttpsRedirection();
         app.UseStaticFiles();
 
