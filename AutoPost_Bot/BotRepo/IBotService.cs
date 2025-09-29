@@ -7,9 +7,7 @@ namespace AutoPost_Bot.BotRepo
         public Task<TelegramBotClient> StartBot(string botToken);
         public Task<TelegramBotClient> GetBotClient(string botToken);
         public Task StopBot(string botToken);
-        public bool IsBotActive();
-        public string GetBotToken();
-        public void SetBotToken(string botToken);
+        public bool IsBotActive(string  botToken);
         public event Action<string, bool>? BotStatusChanged;
     }
 }

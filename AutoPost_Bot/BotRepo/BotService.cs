@@ -8,16 +8,17 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotService : IBotService
     {
-        private CancellationTokenSource? cts;
-        private readonly UpdateHandler? updateHandler;
+        private readonly CancellationTokenSource? _cts;
+        private readonly UpdateHandler? _updateHandler;
         private readonly PostsContext? _postContext;
         private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _bots;
         public event Action<string, bool>? BotStatusChanged;
 
-        public BotService(IGroupRepo groupRepo, PostsContext postsContext)
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext, CancellationTokenSource? cts)
         {
-            updateHandler = new(groupRepo);
+            _updateHandler = new UpdateHandler(groupRepo);
             _postContext = postsContext;
+            this._cts = cts;
 
             _bots = _postContext.Bots
                 .Where(bot => bot.IsActive)
@@ -63,7 +64,7 @@ namespace AutoPost_Bot.BotRepo
                 if (bot == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
 
-                cts?.Cancel();
+                _cts?.Cancel();
 
                 bot.Value.Cts.Cancel();
 
@@ -109,12 +110,12 @@ namespace AutoPost_Bot.BotRepo
 
                 BotStatusChanged?.Invoke(botToken, true);
 
-                if (updateHandler is null)
+                if (_updateHandler is null)
                 {
                     throw new InvalidOperationException("Update handler is not initialized.");
                 }
 
-                botValue.Client.OnUpdate += updateHandler.OnUpdate;
+                botValue.Client.OnUpdate += _updateHandler.OnUpdate;
                 botValue.Client.OnError += OnError;
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
@@ -139,21 +140,8 @@ namespace AutoPost_Bot.BotRepo
             });
         }
 
-        //Todo: Переписываем методы работы с ботом по очереди, чтобы можно было работать с несколькими ботами одновременно.
-        public bool IsBotActive() => bot.IsActive;
-
-        public string GetBotToken() => bot.Token;
-
-        public void SetBotToken(string botToken)
-        {
-            try
-            {
-                bot.Token = botToken;
-            }
-            catch
-            {
-                throw new Exception("Error when updating bot Token.");
-            }
-        }
+        public bool IsBotActive(string botToken) => 
+            _bots != null ? _bots.TryGetValue(botToken, out var bot) 
+                : throw new InvalidOperationException("bot list is not provided.");
     }
 }
