@@ -215,12 +215,11 @@
 
 @code {
     private Action? _groupRepoChangedHandler;
-    private string _botToken = string.Empty;
+    private Dictionary<string, List<PostModel>> _botsAndPosts = new();
     private bool _hasError;
     private bool _hasStatus;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
-    private List<PostModel> _posts = [];
     private Dictionary<long, string> _groups = new();
     private bool _isDisposed;
 
@@ -228,14 +227,12 @@
     {
         try
         {
-            _botToken = BotService.GetBotToken();
+            var botTokens = BotService.GetBotsTokens();
+            //Определили какие токены у нас есть итого
+            //Теперь в словарь нужно засунуть токены ботов и их посты
+            //Todo: см. коммент выше
 
             await LoadGroups();
-
-            if (BotService.IsBotActive() && !string.IsNullOrWhiteSpace(_botToken))
-            {
-                _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
-            }
 
             _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
             GroupRepo.StateChanged += _groupRepoChangedHandler;

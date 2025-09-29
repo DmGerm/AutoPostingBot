@@ -36,5 +36,6 @@ namespace AutoPost_Bot.BotRepo
         }
 
         private void UpdateBotStatusInDatabase(string botToken, bool botStatus) => UpdateBotStatus(botToken, botStatus);
+        public List<string> GetAllBotTokensFromDb() =>  _postContext.Bots.Select(b => b.Token).ToList();
     }
 }

@@ -32,6 +32,9 @@ public class Program
 
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
+                
+                cb.RegisterType<BotData>()
+                    .As<IBotData>().InstancePerLifetimeScope();
 
                 Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "DbData"));
                 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "DbData");

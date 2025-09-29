@@ -13,12 +13,14 @@ namespace AutoPost_Bot.BotRepo
         private readonly PostsContext? _postContext;
         private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _bots;
         public event Action<string, bool>? BotStatusChanged;
+        private readonly IBotData? _botData;
 
-        public BotService(IGroupRepo groupRepo, PostsContext postsContext, CancellationTokenSource? cts)
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext, CancellationTokenSource? cts, IBotData? botData)
         {
             _updateHandler = new UpdateHandler(groupRepo);
             _postContext = postsContext;
             this._cts = cts;
+            _botData = botData;
 
             _bots = _postContext.Bots
                 .Where(bot => bot.IsActive)
@@ -143,5 +145,7 @@ namespace AutoPost_Bot.BotRepo
         public bool IsBotActive(string botToken) => 
             _bots != null ? _bots.TryGetValue(botToken, out var bot) 
                 : throw new InvalidOperationException("bot list is not provided.");
+
+        public List<string> GetBotsTokens() => _botData?.GetAllBotTokensFromDb();
     }
 }
