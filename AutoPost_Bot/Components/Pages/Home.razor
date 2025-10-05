@@ -135,59 +135,62 @@
                             <div class="btn-group btn-group-sm" role="group" aria-label="Repeat days checkboxes">
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id="btncheck1"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Monday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Monday)">
-                                <label class="btn btn-outline-primary" for="btncheck1">Пн</label>
+                                <label class="btn btn-outline-primary" 
+                                       for=@($"btncheck{buttonCount++}")>Пн</label>
 
                                 <input type="checkbox"
-                                       class="btn-check" id="btncheck2"
+                                       class="btn-check"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Tuesday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Tuesday)">
-                                <label class="btn btn-outline-primary" for="btncheck2">Вт</label>
+                                <label class="btn btn-outline-primary" 
+                                       for=@($"btncheck{buttonCount++}")>Вт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id="btncheck3"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Wednesday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Wednesday)" />
+                                       @onchange="() => DayAddOrRemove(post, Days.Wednesday)">
                                 <label class="btn btn-outline-primary"
-                                       for="btncheck3">Ср</label>
+                                       for=@($"btncheck{buttonCount++}")>Ср</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id="btncheck4"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Thursday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Thursday)">
-                                <label class="btn btn-outline-primary" for="btncheck4">Чт</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Чт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id="btncheck5"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Friday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Friday)">
-                                <label class="btn btn-outline-primary" for="btncheck5">Пт</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Пт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id="btncheck6"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Saturday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Saturday)">
-                                <label class="btn btn-outline-primary" for="btncheck6">Сб</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Сб</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id="btncheck7"
+                                       id=@($"btncheck{buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Sunday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Sunday)">
-                                <label class="btn btn-outline-primary" for="btncheck7">Вс</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Вс</label>
                             </div>
                         </div>
                     </div>
@@ -223,11 +226,13 @@
     private List<PostModel> _posts = [];
     private Dictionary<long, string> _groups = new();
     private bool _isDisposed;
+	private int buttonCount = 1;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+			buttonCount = 1;
             _botToken = BotService.GetBotToken();
 
             await LoadGroups();
@@ -427,5 +432,4 @@
         StateHasChanged();
         return Task.CompletedTask;
     }
-
 }
