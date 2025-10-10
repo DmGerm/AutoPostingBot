@@ -2,6 +2,7 @@
 {
     public interface IBotData
     {
+        List<string>? GetAllBots();
         public List<string> GetAllBotTokensFromDb();
     }
 }

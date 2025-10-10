@@ -1,4 +1,5 @@
-﻿using Telegram.Bot;
+﻿using AutoPost_Bot.Models;
+using Telegram.Bot;
 
 namespace AutoPost_Bot.BotRepo
 {
@@ -7,8 +8,8 @@ namespace AutoPost_Bot.BotRepo
         public Task<TelegramBotClient> StartBot(string botToken);
         public Task<TelegramBotClient> GetBotClient(string botToken);
         public Task StopBot(string botToken);
-        public bool IsBotActive(string  botToken);
+        public bool IsBotActive(string botToken);
         public event Action<string, bool>? BotStatusChanged;
-        public List<string> GetBotsTokens();
+        public List<BotModel> GetBotModels();
     }
 }

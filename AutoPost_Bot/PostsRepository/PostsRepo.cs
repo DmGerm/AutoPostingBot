@@ -76,7 +76,8 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
     {
         try
         {
-            return await postsContext.Posts.Where(post => post.BotID != null && post.BotID.Trim() == botToken.Trim())
+            return await postsContext.Posts.Include(post => post.Group)
+                .Where(post => post.BotToken != null && post.BotToken.Trim() == botToken.Trim())
                 .ToListAsync();
         }
         catch (Exception e)

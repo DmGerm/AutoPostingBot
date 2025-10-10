@@ -37,6 +37,14 @@ namespace AutoPost_Bot.Data
                                         .ValueGeneratedNever();
 
                 post.HasIndex(x => x.Id).HasDatabaseName("IX_Posts_Id");
+
+                post.HasOne(post => post.Group)
+                    .WithMany(group => group.Posts)
+                    .HasForeignKey(post => post.GroupId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                post.Property(post => post.GroupId)
+                    .HasColumnType("TEXT");
             });
 
 
@@ -46,6 +54,7 @@ namespace AutoPost_Bot.Data
 
                 group.Property(x => x.GroupId)
                      .ValueGeneratedNever();
+
             });
         }
     }

@@ -1,4 +1,6 @@
 ﻿using AutoPost_Bot.Data;
+using AutoPost_Bot.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot.BotRepo
 {
@@ -36,6 +38,10 @@ namespace AutoPost_Bot.BotRepo
         }
 
         private void UpdateBotStatusInDatabase(string botToken, bool botStatus) => UpdateBotStatus(botToken, botStatus);
-        public List<string> GetAllBotTokensFromDb() =>  _postContext.Bots.Select(b => b.Token).ToList();
+        public List<string> GetAllBotTokensFromDb() => _postContext.Bots.Select(b => b.Token).ToList();
+
+        public List<BotModel>? GetAllBots() => _postContext.Bots
+            .Include(bot => bot.Groups)
+            .ToList();
     }
 }

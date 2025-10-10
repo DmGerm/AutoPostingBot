@@ -19,15 +19,15 @@
             <button class="btn btn-outline-secondary"
                     type="button"
                     id="button-addon1"
-                    @onclick="ToggleBot">
-                @(BotService.IsBotActive() ? "Остановить бота" : "Запустить бота")
+                    @onclick="() => ToggleBot(_allBots[0])">
+                @(_allBots[0].IsActive) ? "Остановить бота" : "Запустить бота")
             </button>
             <input type="text"
                    class="form-control @(_hasError ? "is-invalid" : "")"
                    placeholder="Введите токен бота"
                    aria-label="Bot Token input form"
                    aria-describedby="button-addon1"
-                   @bind="_botToken"/>
+                   @bind="_allBots[0].Token"/>
         </div>
 
         @if (_hasError)
@@ -38,8 +38,9 @@
         {
             <div class="text-success mb-3">@_statusMessage</div>
         }
-        @if (BotService.IsBotActive())
+        @if (_allBots[0].IsActive)
         {
+            //Todo: Двигаемся дальше по строчно (меняем все по принятому шаблону)
             <div class="post_container">
                 <h1>Настройка авто-постинга</h1>
 
@@ -218,27 +219,25 @@
 
 @code {
     private Action? _groupRepoChangedHandler;
-    private Dictionary<string, List<PostModel>> _botsAndPosts = new();
+    private Dictionary<int, BotModel> _allBots = new();
     private bool _hasError;
     private bool _hasStatus;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
     private Dictionary<long, string> _groups = new();
+    private List<PostModel> _posts = new();
     private bool _isDisposed;
-	private int buttonCount = 1;
+    private int buttonCount = 1;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var botTokens = BotService.GetBotsTokens();
-            //Определили какие токены у нас есть итого
-            //Теперь в словарь нужно засунуть токены ботов и их посты
-            //Todo: см. коммент выше
-			buttonCount = 1;
-            _botToken = BotService.GetBotToken();
+            buttonCount = 1;
+            _allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
+                                                 .ToDictionary(x => x.Item1, x => x.Item2);
 
-            await LoadGroups();
+            _posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[0].Token);
 
             _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
             GroupRepo.StateChanged += _groupRepoChangedHandler;
@@ -246,23 +245,6 @@
         catch (Exception ex)
         {
             HandleError("Ошибка инициализации: " + ex.Message);
-        }
-    }
-
-    private async Task LoadGroups()
-    {
-        try
-        {
-            var groupsResult = await GroupRepo.GetAllGroupsAsync();
-            _groups = groupsResult.ToDictionary(g => g.Key, g => g.Value);
-
-            _posts.Where(post => !(post.GroupID is { } groupId && _groups.ContainsKey(groupId)))
-                .ToList()
-                .ForEach(post => post.GroupID = null);
-        }
-        catch (Exception ex)
-        {
-            HandleError("Ошибка загрузки групп: " + ex.Message);
         }
     }
 
@@ -276,17 +258,16 @@
             : "Группа не найдена";
     }
 
-    private async Task ToggleBot()
+    private async Task ToggleBot(BotModel bot)
     {
         _hasError = false;
         _hasStatus = false;
 
         try
         {
-            if (BotService.IsBotActive())
+            if (bot.IsActive)
             {
-                await BotService.StopBot();
-                _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
+                await BotService.StopBot(bot.Token);
                 ShowStatus("Бот успешно остановлен!");
             }
             else
@@ -294,9 +275,8 @@
                 if (!ValidateBotToken())
                     return;
 
-                await BotService.StartBot(_botToken);
+                await BotService.StartBot(bot.Token);
                 ShowStatus("Бот успешно запущен!");
-                _posts = await PostsRepo.GetPostsByBotTokenAsync(_botToken);
             }
         }
         catch (Exception ex)

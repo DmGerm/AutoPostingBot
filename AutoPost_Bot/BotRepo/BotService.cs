@@ -1,5 +1,6 @@
 ﻿using AutoPost_Bot.Data;
 using AutoPost_Bot.Handlers;
+using AutoPost_Bot.Models;
 using AutoPost_Bot.TelegramGroupsRepo;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -11,7 +12,7 @@ namespace AutoPost_Bot.BotRepo
         private readonly CancellationTokenSource? _cts;
         private readonly UpdateHandler? _updateHandler;
         private readonly PostsContext? _postContext;
-        private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _bots;
+        private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _activeBots;
         public event Action<string, bool>? BotStatusChanged;
         private readonly IBotData? _botData;
 
@@ -22,7 +23,7 @@ namespace AutoPost_Bot.BotRepo
             this._cts = cts;
             _botData = botData;
 
-            _bots = _postContext.Bots
+            _activeBots = _postContext.Bots
                 .Where(bot => bot.IsActive)
                 .ToDictionary(
                     bot => bot.Token,
@@ -40,7 +41,7 @@ namespace AutoPost_Bot.BotRepo
                 throw new InvalidOperationException("Database context is not available.");
             try
             {
-                var bot = _bots?.GetValueOrDefault(botToken);
+                var bot = _activeBots?.GetValueOrDefault(botToken);
 
                 if (bot == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
@@ -61,7 +62,7 @@ namespace AutoPost_Bot.BotRepo
                 if (string.IsNullOrEmpty(botToken))
                     throw new InvalidOperationException("Bot token is not provided!");
 
-                var bot = _bots?.GetValueOrDefault(botToken);
+                var bot = _activeBots?.GetValueOrDefault(botToken);
 
                 if (bot == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
@@ -72,7 +73,7 @@ namespace AutoPost_Bot.BotRepo
 
                 BotStatusChanged?.Invoke(botToken, false);
 
-                _bots?.Remove(botToken);
+                _activeBots?.Remove(botToken);
 
                 return Task.CompletedTask;
             }
@@ -93,17 +94,17 @@ namespace AutoPost_Bot.BotRepo
                     throw new InvalidOperationException("Bot token is not provided!");
                 }
 
-                if (_bots is null)
+                if (_activeBots is null)
                 {
                     throw new InvalidOperationException("Bots dictionary is not initialized.");
                 }
 
-                if (!_bots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource())))
+                if (!_activeBots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource())))
                 {
                     throw new InvalidOperationException("Bot is already started.");
                 }
 
-                if (!_bots.TryGetValue(botToken, out var botValue))
+                if (!_activeBots.TryGetValue(botToken, out var botValue))
                 {
                     throw new InvalidOperationException("Failed to retrieve the bot after adding it.");
                 }
@@ -142,10 +143,10 @@ namespace AutoPost_Bot.BotRepo
             });
         }
 
-        public bool IsBotActive(string botToken) => 
-            _bots != null ? _bots.TryGetValue(botToken, out var bot) 
+        public bool IsBotActive(string botToken) =>
+            _activeBots != null ? _activeBots.TryGetValue(botToken, out var bot)
                 : throw new InvalidOperationException("bot list is not provided.");
 
-        public List<string> GetBotsTokens() => _botData?.GetAllBotTokensFromDb();
+        public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? new List<string>();
     }
 }
