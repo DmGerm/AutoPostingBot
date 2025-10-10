@@ -40,7 +40,6 @@
         }
         @if (_allBots[0].IsActive)
         {
-            //Todo: Двигаемся дальше по строчно (меняем все по принятому шаблону)
             <div class="post_container">
                 <h1>Настройка авто-постинга</h1>
 
@@ -61,11 +60,12 @@
                                     type="button"
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false">
-                                @GetGroupName(post.GroupID)
+                                @GetGroupName(post.Group)
                             </button>
                             <ul class="dropdown-menu">
                                 @foreach (var group in _groups)
                                 {
+            //Todo: Двигаемся дальше по строчно (меняем все по принятому шаблону)
                                     <li>
                                         <a class="dropdown-item"
                                            href="#"
@@ -224,7 +224,6 @@
     private bool _hasStatus;
     private string _errorMessage = string.Empty;
     private string _statusMessage = string.Empty;
-    private Dictionary<long, string> _groups = new();
     private List<PostModel> _posts = new();
     private bool _isDisposed;
     private int buttonCount = 1;
@@ -248,13 +247,13 @@
         }
     }
 
-    private string GetGroupName(long? groupId)
+    private string GetGroupName(GroupModel group)
     {
-        if (groupId == null || groupId == 0)
+        if (group == null)
             return "Выберите канал или группу";
 
-        return _groups.TryGetValue(groupId.Value, out var name)
-            ? name
+        return String.IsNullOrEmpty(group.Name)
+            ? group.Name
             : "Группа не найдена";
     }
 
