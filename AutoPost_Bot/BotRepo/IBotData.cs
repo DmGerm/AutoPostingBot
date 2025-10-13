@@ -4,7 +4,7 @@ namespace AutoPost_Bot.BotRepo
 {
     public interface IBotData
     {
-        List<string>? GetAllBots();
+        List<BotModel>? GetAllBots();
         public List<BotModel> GetAllBotTokensFromDb();
     }
 }

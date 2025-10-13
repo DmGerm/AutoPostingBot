@@ -10,26 +10,29 @@ namespace AutoPost_Bot.BotRepo
     public class BotService : IBotService
     {
         private readonly CancellationTokenSource? _cts;
-        private readonly UpdateHandler? _updateHandler;
+        private UpdateHandler? _updateHandler;
         private readonly PostsContext? _postContext;
-        private readonly Dictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts)>? _activeBots;
+        private readonly IGroupRepo _groupRepo;
+        private readonly Dictionary<string, (TelegramBotClient Client,
+                                      CancellationTokenSource Cts,
+                                      UpdateHandler Handler)> _activeBots;
         public event Action<string, bool>? BotStatusChanged;
         private readonly IBotData? _botData;
 
         public BotService(IGroupRepo groupRepo, PostsContext postsContext, CancellationTokenSource? cts, IBotData? botData)
         {
-            _updateHandler = new UpdateHandler(groupRepo);
             _postContext = postsContext;
             this._cts = cts;
             _botData = botData;
+            _groupRepo = groupRepo;
 
             _activeBots = _postContext.Bots
                 .Where(bot => bot.IsActive)
                 .ToDictionary(
                     bot => bot.Token,
-                    bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource())
+                    bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource(),
+                    new UpdateHandler(_groupRepo, bot.Token))
                 );
-
         }
 
         public async Task<TelegramBotClient> GetBotClient(string botToken)
@@ -98,7 +101,7 @@ namespace AutoPost_Bot.BotRepo
                 {
                     throw new InvalidOperationException("Bots dictionary is not initialized.");
                 }
-
+                //ToDo: Исправляем обработку повторного добавления бота, все методы проверить
                 if (!_activeBots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource())))
                 {
                     throw new InvalidOperationException("Bot is already started.");
@@ -109,7 +112,9 @@ namespace AutoPost_Bot.BotRepo
                     throw new InvalidOperationException("Failed to retrieve the bot after adding it.");
                 }
 
+
                 var me = await botValue.Client.GetMe();
+
 
                 BotStatusChanged?.Invoke(botToken, true);
 
@@ -120,6 +125,7 @@ namespace AutoPost_Bot.BotRepo
 
                 botValue.Client.OnUpdate += _updateHandler.OnUpdate;
                 botValue.Client.OnError += OnError;
+
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
@@ -147,6 +153,6 @@ namespace AutoPost_Bot.BotRepo
             _activeBots != null ? _activeBots.TryGetValue(botToken, out var bot)
                 : throw new InvalidOperationException("bot list is not provided.");
 
-        public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? new List<BotModel>();
+        public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? [];
     }
 }

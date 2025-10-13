@@ -39,24 +39,6 @@ public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
     }
 
 
-    public async Task SavePostChangesAsync(List<PostModel> postsList)
-    {
-        if (postsList.Count == 0) return;
-
-        var botId = postsList[0].BotID;
-        if (string.IsNullOrWhiteSpace(botId)) return;
-
-        var existing = await postsContext.Posts
-            .Where(p => p.BotID == botId)
-            .ToListAsync();
-
-        postsContext.Posts.RemoveRange(existing);
-        await postsContext.SaveChangesAsync();
-
-        await postsContext.AddRangeAsync(postsList);
-        await postsContext.SaveChangesAsync();
-    }
-
     public async Task UpdatePostAsync(PostModel post)
     {
         var dbPost = await postsContext.Posts.FindAsync(post.Id);
