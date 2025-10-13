@@ -4,8 +4,10 @@ using Telegram.Bot.Types.Enums;
 
 namespace AutoPost_Bot.Handlers
 {
-    public class UpdateHandler(IGroupRepo groupRepo)
+    public class UpdateHandler(IGroupRepo groupRepo, string botToken)
     {
+        private readonly string _botToken = botToken;
+        //ToDo: Привязываем группы к конкретному боту
         private readonly IGroupRepo _groupRepo = groupRepo;
         public async Task OnUpdate(Update update)
         {

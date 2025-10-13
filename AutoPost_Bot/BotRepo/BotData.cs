@@ -6,6 +6,7 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotData : IBotData
     {
+        //ToDo: Исправить интерфейс
         private readonly PostsContext _postContext;
         private readonly IBotService _botService;
         public BotData(PostsContext postsContext, IBotService botService)
