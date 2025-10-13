@@ -63,14 +63,14 @@
                                 @GetGroupName(post.Group)
                             </button>
                             <ul class="dropdown-menu">
-                                @foreach (var group in _groups)
+                                @foreach (var group in _allBots[0].Groups)
                                 {
             //Todo: Двигаемся дальше по строчно (меняем все по принятому шаблону)
                                     <li>
                                         <a class="dropdown-item"
                                            href="#"
-                                           @onclick="() => SelectGroup(post, group.Key)">
-                                            @group.Value
+                                           @onclick="() => SelectGroup(post, group)">
+                                            @group.Name
                                         </a>
                                     </li>
                                 }
@@ -287,16 +287,17 @@
     private bool ValidateBotToken()
     {
         const string pattern = @"^(?:\w+):(?:[\w:]+)";
-        if (Regex.IsMatch(_botToken, pattern))
+        if (Regex.IsMatch(_allBots[0].Token, pattern))
             return true;
 
         HandleError("Неверный формат токена");
         return false;
     }
 
-    private void SelectGroup(PostModel post, long groupId)
+    private void SelectGroup(PostModel post, GroupModel group)
     {
-        post.GroupID = groupId;
+        post.Group = group;
+		post.GroupId = group.GroupId;
         StateHasChanged();
     }
 
@@ -306,12 +307,13 @@
         {
             Id = Guid.NewGuid(),
             PostText = string.Empty,
-            BotID = _botToken,
             PostDateTime = DateTime.Now,
             RepeatDays = 0,
             RepeatHours = 0,
             RepeatMinutes = 0
         });
+
+        _allBots[0].Posts = _posts;
 
         StateHasChanged();
     }
