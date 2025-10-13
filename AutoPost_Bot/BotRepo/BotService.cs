@@ -147,6 +147,6 @@ namespace AutoPost_Bot.BotRepo
             _activeBots != null ? _activeBots.TryGetValue(botToken, out var bot)
                 : throw new InvalidOperationException("bot list is not provided.");
 
-        public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? new List<string>();
+        public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? new List<BotModel>();
     }
 }

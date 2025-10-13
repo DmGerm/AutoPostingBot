@@ -5,5 +5,6 @@
         public long GroupId { get; set; }
         public string Name { get; set; } = string.Empty;
         public virtual IEnumerable<BotModel>? Bots { get; set; }
+        public virtual IEnumerable<PostModel>? Posts { get; set; }
     }
 }

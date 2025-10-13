@@ -11,5 +11,7 @@
         public int RepeatMinutes { get; set; }
         public virtual BotModel? Bot { get; set; }
         public string BotToken { get; set; }
+        public Guid GroupId { get; set; }
+        public virtual GroupModel? Group { get; set; }
     }
 }
