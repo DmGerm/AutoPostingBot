@@ -7,60 +7,71 @@ namespace AutoPost_Bot.PostsRepository;
 
 public class PostsRepo(PostsContext postsContext, IMapper mapper) : IPostsRepo
 {
-    public async Task<PostModel?> AddPostAsync(PostModel post)
-    {
-        try
+    /*    public async Task<PostModel?> AddPostAsync(PostModel post)
         {
-            postsContext.Posts.Add(post);
-            await postsContext.SaveChangesAsync();
-            return post;
+            try
+            {
+                postsContext.Posts.Add(post);
+                await postsContext.SaveChangesAsync();
+                return post;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
         }
-        catch (Exception ex)
+
+        public Task<PostModel?> ChangePostByIdAsync(Guid id, PostModel post)
         {
-            Console.WriteLine(ex.Message);
-            return null;
+            throw new NotImplementedException();
         }
-    }
 
-    public Task<PostModel?> ChangePostByIdAsync(Guid id, PostModel post)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<PostModel?> GetPostByIdAsync(Guid id)
-    {
-        return await postsContext.Posts
-            .FirstOrDefaultAsync(post => post.Id == id);
-    }
-
-    public async Task<List<PostModel>> GetPostsAsync()
-    {
-        return await postsContext.Posts.ToListAsync();
-    }
-
-
-    public async Task UpdatePostAsync(PostModel post)
-    {
-        var dbPost = await postsContext.Posts.FindAsync(post.Id);
-
-        if (dbPost != null) mapper.Map(post, dbPost);
-        try
+        public async Task<PostModel?> GetPostByIdAsync(Guid id)
         {
-            await postsContext.SaveChangesAsync();
+            return await postsContext.Posts
+                .FirstOrDefaultAsync(post => post.Id == id);
         }
-        catch (Exception ex)
+
+        public async Task<List<PostModel>> GetPostsAsync()
         {
-            Console.WriteLine(ex.Message);
+            return await postsContext.Posts.ToListAsync();
         }
-    }
+
+
+        public async Task UpdatePostAsync(PostModel post)
+        {
+            var dbPost = await postsContext.Posts.FindAsync(post.Id);
+
+            if (dbPost != null) mapper.Map(post, dbPost);
+            try
+            {
+                await postsContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+    */
 
     public async Task<List<PostModel>> GetPostsByBotTokenAsync(string botToken)
     {
         try
         {
-            return await postsContext.Posts.Include(post => post.Group)
-                .Where(post => post.BotToken != null && post.BotToken.Trim() == botToken.Trim())
-                .ToListAsync();
+            BotModel? bot = await postsContext.Bots
+                .Include(b => b.Groups)
+                .Include(b => b.Posts)
+                .FirstOrDefaultAsync(b => b.Token != null && b.Token.Trim() == botToken.Trim());
+
+            if (bot?.Posts != null)
+            {
+                return bot.Posts.ToList();
+            }
+            else
+            {
+                throw new Exception("Posts not found");
+            }
         }
         catch (Exception e)
         {

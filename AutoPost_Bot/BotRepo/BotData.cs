@@ -6,14 +6,28 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotData : IBotData
     {
-        //ToDo: Исправить интерфейс
         private readonly PostsContext _postContext;
         private readonly IBotService _botService;
         public BotData(PostsContext postsContext, IBotService botService)
         {
-            _postContext = postsContext;
-            _botService = botService;
+            _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
+            _botService = botService ?? throw new ArgumentNullException(nameof(botService));
             _botService.BotStatusChanged += UpdateBotStatusInDatabase;
+
+            if (_postContext.Bots == null)
+            {
+                throw new InvalidOperationException("Bots DbSet is not initialized.");
+            }
+
+            if (!_postContext.Bots.Any())
+            {
+                _postContext.Bots.Add(new Models.BotModel
+                {
+                    Token = string.Empty,
+                    IsActive = false
+                });
+                _postContext.SaveChanges();
+            }
         }
 
         private void UpdateBotStatus(string botToken, bool botStatus)
@@ -44,5 +58,11 @@ namespace AutoPost_Bot.BotRepo
         public List<BotModel>? GetAllBots() => _postContext.Bots
             .Include(bot => bot.Groups)
             .ToList();
+
+        public Task UpdateBotModel(BotModel model)
+        {
+            _postContext.Bots.Update(model);
+            return _postContext.SaveChangesAsync();
+        }
     }
 }

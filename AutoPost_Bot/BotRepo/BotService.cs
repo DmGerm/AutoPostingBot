@@ -101,8 +101,7 @@ namespace AutoPost_Bot.BotRepo
                 {
                     throw new InvalidOperationException("Bots dictionary is not initialized.");
                 }
-                //ToDo: Исправляем обработку повторного добавления бота, все методы проверить
-                if (!_activeBots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource())))
+                if (!_activeBots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource(), new UpdateHandler(_groupRepo, botToken))))
                 {
                     throw new InvalidOperationException("Bot is already started.");
                 }
@@ -112,9 +111,7 @@ namespace AutoPost_Bot.BotRepo
                     throw new InvalidOperationException("Failed to retrieve the bot after adding it.");
                 }
 
-
                 var me = await botValue.Client.GetMe();
-
 
                 BotStatusChanged?.Invoke(botToken, true);
 
@@ -154,5 +151,22 @@ namespace AutoPost_Bot.BotRepo
                 : throw new InvalidOperationException("bot list is not provided.");
 
         public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? [];
+
+        public async Task UpdateBotModel(BotModel model)
+        {
+            try
+            {
+                if (_botData is null)
+                    throw new InvalidOperationException("Bot data service is not available.");
+
+                await _botData.UpdateBotModel(model);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception in UpdateBotModel: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                throw;
+            }
+        }
     }
 }

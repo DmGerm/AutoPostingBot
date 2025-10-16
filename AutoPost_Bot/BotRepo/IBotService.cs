@@ -11,5 +11,6 @@ namespace AutoPost_Bot.BotRepo
         public bool IsBotActive(string botToken);
         public event Action<string, bool>? BotStatusChanged;
         public List<BotModel> GetBotModels();
+        public Task UpdateBotModel(BotModel model);
     }
 }

@@ -6,6 +6,6 @@
         public bool IsActive { get; set; }
 
         public virtual IEnumerable<GroupModel>? Groups { get; set; }
-        public virtual IEnumerable<PostModel>? Posts { get; set; }
+        public virtual List<PostModel>? Posts { get; set; }
     }
 }
