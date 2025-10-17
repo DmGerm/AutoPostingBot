@@ -9,7 +9,7 @@ namespace AutoPost_Bot.ScheduleService
 {
     public class PostSchedulerService(IServiceProvider serviceProvider) : BackgroundService
     {
-
+        //Переделать, нужно пройти по всем активным ботам и для каждого бота в его постах проверить время
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -111,13 +111,13 @@ namespace AutoPost_Bot.ScheduleService
         {
             return dayOfWeek switch
             {
-                DayOfWeek.Monday    => Days.Monday,
-                DayOfWeek.Tuesday   => Days.Tuesday,
+                DayOfWeek.Monday => Days.Monday,
+                DayOfWeek.Tuesday => Days.Tuesday,
                 DayOfWeek.Wednesday => Days.Wednesday,
-                DayOfWeek.Thursday  => Days.Thursday,
-                DayOfWeek.Friday    => Days.Friday,
-                DayOfWeek.Saturday  => Days.Saturday,
-                DayOfWeek.Sunday    => Days.Sunday,
+                DayOfWeek.Thursday => Days.Thursday,
+                DayOfWeek.Friday => Days.Friday,
+                DayOfWeek.Saturday => Days.Saturday,
+                DayOfWeek.Sunday => Days.Sunday,
                 _ => Days.None
             };
         }

@@ -3,9 +3,7 @@
     public interface IGroupRepo
     {
         event Action StateChanged;
-        public Task AddGroup(long groupId, string groupName);
-        public Task<long> RemoveGroupAsync(long groupId);
-        public Task<string> ChangeGroupAsync(long groupId);
-        public Task<Dictionary<long, string>> GetAllGroupsAsync();
+        public Task AddGroup(long groupId, string groupName, string botToken);
+        public Task<long> RemoveGroupAsync(long groupId, string botToken);
     }
 }

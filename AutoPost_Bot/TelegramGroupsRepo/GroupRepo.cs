@@ -9,15 +9,23 @@ public class GroupRepo(PostsContext dbContext) : IGroupRepo
     private readonly PostsContext _dbContext = dbContext;
     public event Action? StateChanged;
 
-    public async Task AddGroup(long groupId, string groupName)
+    public async Task AddGroup(long groupId, string groupName, string botToken)
     {
-        if (await _dbContext.Groups.FirstOrDefaultAsync(group => group.GroupId == groupId) != null)
-            throw new Exception("Группа с таким ID уже добавлена.");
-
-
         try
         {
-            await _dbContext.Groups.AddAsync(new GroupModel { GroupId = groupId, Name = groupName });
+            if (await _dbContext.Groups.FirstOrDefaultAsync(group => group.GroupId == groupId) != null)
+                throw new Exception("Группа с таким ID уже добавлена.");
+
+            var group = new GroupModel
+            {
+                GroupId = groupId,
+                Name = groupName,
+                Bots = new List<BotModel>
+                {
+                    await _dbContext.Bots.FirstAsync(bot => bot.Token == botToken)
+                }
+            };
+            await _dbContext.Groups.AddAsync(group);
             await _dbContext.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -29,49 +37,38 @@ public class GroupRepo(PostsContext dbContext) : IGroupRepo
         OnStateChanged();
     }
 
-    public async Task<string> ChangeGroupAsync(long groupId)
-    {
-        var group = await _dbContext.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId)
-                    ?? throw new Exception("Группа с указанным id не найдена в базе данных.");
-
-        try
-        {
-            await _dbContext.SaveChangesAsync();
-            OnStateChanged();
-            return group.Name;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Проблема при обновлении группы: {ex.Message}");
-            Console.WriteLine($"Внутреннее исключение: {ex.InnerException?.Message}");
-            throw;
-        }
-    }
-
-
-    public async Task<Dictionary<long, string>> GetAllGroupsAsync()
+    public async Task<long> RemoveGroupAsync(long groupId, string botToken)
     {
         try
         {
-            return await _dbContext.Groups
-                .ToDictionaryAsync(group => group.GroupId, group => group.Name);
+            var group = await _dbContext.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId)
+                        ?? throw new Exception("Group with this id not found in db.");
+
+            if (group.Bots.All(bot => bot.Token != botToken))
+                throw new Exception("This bot is not associated with the group.");
+            else
+            {
+                var bot = await _dbContext.Bots.FirstAsync(b => b.Token == botToken);
+                group.Bots.Remove(bot);
+                await _dbContext.SaveChangesAsync();
+                OnStateChanged();
+                if (group.Bots.Count > 0)
+                    return group.GroupId;
+                else
+                {
+                    Console.WriteLine("No bots left in group, deleting group...");
+                    _dbContext.Groups.Remove(group);
+                    await _dbContext.SaveChangesAsync();
+                    return group.GroupId;
+                }
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Console.WriteLine($"Problem with group removing, {ex.Message}");
+            Console.WriteLine($"Inner: {ex.InnerException?.Message}");
             throw;
         }
-    }
-
-    public async Task<long> RemoveGroupAsync(long groupId)
-    {
-        var group = await _dbContext.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId)
-                    ?? throw new Exception("Group with this id not found in db.");
-
-        _dbContext.Groups.Remove(group);
-        await _dbContext.SaveChangesAsync();
-
-        return group.GroupId;
     }
 
     private void OnStateChanged()
