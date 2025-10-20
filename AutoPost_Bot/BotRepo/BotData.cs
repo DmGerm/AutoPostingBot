@@ -8,6 +8,7 @@ namespace AutoPost_Bot.BotRepo
     {
         private readonly PostsContext _postContext;
         private readonly IBotService _botService;
+        private event EventHandler<string>? BotDataBaseUpdated;
         public BotData(PostsContext postsContext, IBotService botService)
         {
             _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
@@ -32,23 +33,33 @@ namespace AutoPost_Bot.BotRepo
 
         private void UpdateBotStatus(string botToken, bool botStatus)
         {
-            if (_postContext is null)
-                throw new InvalidOperationException("Database context is not available.");
+            try
+            {
+                if (_postContext is null)
+                    throw new InvalidOperationException("Database context is not available.");
 
-            var bot = _postContext.Bots.FirstOrDefault(b => b.Token == botToken);
-            if (bot != null)
-            {
-                bot.IsActive = botStatus;
-                _postContext.SaveChanges();
-            }
-            else
-            {
-                _postContext.Bots.Add(new Models.BotModel
+                var bot = _postContext.Bots.FirstOrDefault(b => b.Token == botToken);
+                if (bot != null)
                 {
-                    Token = botToken,
-                    IsActive = botStatus
-                });
-                _postContext.SaveChanges();
+                    bot.IsActive = botStatus;
+                    _postContext.SaveChanges();
+                }
+                else
+                {
+                    _postContext.Bots.Add(new Models.BotModel
+                    {
+                        Token = botToken,
+                        IsActive = botStatus
+                    });
+                    _postContext.SaveChanges();
+                    BotDataBaseUpdated?.Invoke(this, botToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception in UpdateBotStatus: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                throw;
             }
         }
 
@@ -61,8 +72,18 @@ namespace AutoPost_Bot.BotRepo
 
         public Task UpdateBotModel(BotModel model)
         {
-            _postContext.Bots.Update(model);
-            return _postContext.SaveChangesAsync();
+            try
+            {
+                _postContext.Bots.Update(model);
+                BotDataBaseUpdated?.Invoke(this, model.Token);
+                return _postContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception in UpdateBotModel: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                throw;
+            }
         }
     }
 }

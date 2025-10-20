@@ -17,6 +17,7 @@ namespace AutoPost_Bot.BotRepo
                                       CancellationTokenSource Cts,
                                       UpdateHandler Handler)> _activeBots;
         public event Action<string, bool>? BotStatusChanged;
+        public event EventHandler<string>? BotPostOrStatusChanged;
         private readonly IBotData? _botData;
 
         public BotService(IGroupRepo groupRepo, PostsContext postsContext, CancellationTokenSource? cts, IBotData? botData)
@@ -78,6 +79,8 @@ namespace AutoPost_Bot.BotRepo
 
                 _activeBots?.Remove(botToken);
 
+                BotPostOrStatusChanged?.Invoke(this, botToken);
+
                 return Task.CompletedTask;
             }
             catch (Exception ex)
@@ -123,6 +126,7 @@ namespace AutoPost_Bot.BotRepo
                 botValue.Client.OnUpdate += _updateHandler.OnUpdate;
                 botValue.Client.OnError += OnError;
 
+                BotPostOrStatusChanged?.Invoke(this, botToken);
 
                 Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
 
@@ -159,6 +163,8 @@ namespace AutoPost_Bot.BotRepo
                 if (_botData is null)
                     throw new InvalidOperationException("Bot data service is not available.");
 
+                BotPostOrStatusChanged?.Invoke(this, model.Token);
+
                 await _botData.UpdateBotModel(model);
             }
             catch (Exception ex)
@@ -167,6 +173,14 @@ namespace AutoPost_Bot.BotRepo
                 Console.WriteLine(ex.StackTrace);
                 throw;
             }
+        }
+
+        public Dictionary<string, TelegramBotClient> GetActiveBots()
+        {
+            return _activeBots?.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Client
+            ) ?? new Dictionary<string, TelegramBotClient>();
         }
     }
 }

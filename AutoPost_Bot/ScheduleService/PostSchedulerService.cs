@@ -1,57 +1,56 @@
 ﻿using AutoPost_Bot.BotRepo;
+using AutoPost_Bot.Data;
 using AutoPost_Bot.Models;
-using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.TelegramGroupsRepo;
+using Microsoft.EntityFrameworkCore;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 
 namespace AutoPost_Bot.ScheduleService
 {
-    public class PostSchedulerService(IServiceProvider serviceProvider) : BackgroundService
+    public class PostSchedulerService(IBotService botService, PostsContext postsContext, IGroupRepo groupRepo) : BackgroundService
     {
-        //Переделать, нужно пройти по всем активным ботам и для каждого бота в его постах проверить время
+        private readonly IBotService _botService = botService;
+        private readonly PostsContext _postsContext = postsContext
+            ?? throw new Exception("Exception in PostScheduler, context can't be null.");
+        private readonly IGroupRepo _groupRepo = groupRepo
+            ?? throw new Exception("Exception in PostScheduler, groupRepo can't be null.");
+
+        Dictionary<string, BotModel> botModelsDict = [];
+        Dictionary<string, TelegramBotClient> activeBots = [];
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+
+            activeBots = _botService.GetActiveBots();
+
+            botModelsDict = _postsContext.Bots
+               .Include(b => b.Posts)
+               .Where(b => activeBots.ContainsKey(b.Token))
+               .ToDictionary(b => b.Token, b => b);
+
+            _botService.BotPostOrStatusChanged += BotDataBaseUpdated_EventHandler;
+
             while (!stoppingToken.IsCancellationRequested)
             {
-                using var scope = serviceProvider.CreateScope();
-                var postRepo = scope.ServiceProvider.GetRequiredService<IPostsRepo>();
-                var botService = scope.ServiceProvider.GetRequiredService<IBotService>();
-                var groupRepo = scope.ServiceProvider.GetRequiredService<IGroupRepo>();
-                ITelegramBotClient botClient;
-
-                try
-                {
-                    botClient = await botService.GetBotClient();
-                }
-                catch
-                {
-                    try
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-                    }
-                    catch (TaskCanceledException)
-                    {
-                    }
-                    continue;
-                }
 
                 var now = DateTime.UtcNow.AddHours(3);
                 var currentDayOfWeek = ConvertDayOfWeek(DateTime.Now.DayOfWeek);
-                var posts = await postRepo.GetPostsAsync();
 
-                if (botClient is not null)
+                foreach (var bot in botModelsDict)
                 {
-                    foreach (var post in posts)
-                    {
+                    if (bot.Value.Posts is null || bot.Value.Posts.Count == 0)
+                        continue;
+
+                    foreach (var post in bot.Value.Posts)
                         if (now >= post.PostDateTime)
                         {
-                            if (post.GroupID != 0 && post.GroupID is not null && post.Days.HasFlag(currentDayOfWeek))
+                            if (post.GroupId != 0 && post.Days.HasFlag(currentDayOfWeek))
                             {
                                 try
                                 {
-                                    await botClient.SendMessage(
-                                                      chatId: post.GroupID,
+                                    await activeBots[bot.Value.Token].SendMessage(
+                                                      chatId: post.GroupId,
                                                       text: post.PostText ?? string.Empty,
                                                       cancellationToken: stoppingToken
                                                   );
@@ -61,12 +60,12 @@ namespace AutoPost_Bot.ScheduleService
                                 {
                                     if (ex.ErrorCode == 404)
                                     {
-                                        Console.WriteLine($"Группа с  ID {post.GroupID} не найдена. Удаление группы из БД.");
-                                        await groupRepo.RemoveGroupAsync(post.GroupID.Value);
+                                        Console.WriteLine($"Группа с  ID {post.GroupId} не найдена. Удаление группы из БД.");
+                                        await groupRepo.RemoveGroupAsync(post.GroupId, bot.Value.Token);
                                     }
                                     else
                                     {
-                                        Console.WriteLine($"Ошибка отправки сообщения в группу {post.GroupID}: {ex.Message}");
+                                        Console.WriteLine($"Ошибка отправки сообщения в группу {post.GroupId}: {ex.Message}");
                                     }
                                 }
                                 catch (Exception ex)
@@ -87,26 +86,27 @@ namespace AutoPost_Bot.ScheduleService
                                 {
                                     post.PostDateTime = DateTime.MaxValue;
                                 }
+                                bot.Value.Posts.Find(p => p.Id == post.Id)!.PostDateTime = post.PostDateTime;
 
-                                await postRepo.UpdatePostAsync(post);
+                                await botService.UpdateBotModel(bot.Value);
                             }
                             catch (Exception ex)
                             {
                                 Console.WriteLine(ex.Message);
                             }
                         }
-                    }
-                }
-
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-                }
-                catch (TaskCanceledException)
-                {
                 }
             }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+            }
+            catch (TaskCanceledException)
+            {
+            }
         }
+
         private Days ConvertDayOfWeek(DayOfWeek dayOfWeek)
         {
             return dayOfWeek switch
@@ -120,6 +120,18 @@ namespace AutoPost_Bot.ScheduleService
                 DayOfWeek.Sunday => Days.Sunday,
                 _ => Days.None
             };
+        }
+
+        private void BotDataBaseUpdated_EventHandler(object? sender, string e)
+        {
+            BotModel? updatedBot = postsContext.Bots
+            .Include(b => b.Posts)
+            .FirstOrDefault(b => b.Token == e);
+            if (updatedBot != null)
+            {
+                botModelsDict[e] = updatedBot;
+            }
+            activeBots = _botService.GetActiveBots();
         }
     }
 }
