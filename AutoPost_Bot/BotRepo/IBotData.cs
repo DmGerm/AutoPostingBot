@@ -6,7 +6,5 @@ namespace AutoPost_Bot.BotRepo
     {
         List<BotModel>? GetAllBots();
         Task UpdateBotModel(BotModel model);
-
-        event EventHandler<string>? BotDataBaseUpdated;
     }
 }

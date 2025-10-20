@@ -127,6 +127,7 @@ namespace AutoPost_Bot.ScheduleService
             BotModel? updatedBot = postsContext.Bots
             .Include(b => b.Posts)
             .FirstOrDefault(b => b.Token == e);
+
             if (updatedBot != null)
             {
                 botModelsDict[e] = updatedBot;

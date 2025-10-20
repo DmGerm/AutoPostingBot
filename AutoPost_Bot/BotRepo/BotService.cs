@@ -20,19 +20,17 @@ namespace AutoPost_Bot.BotRepo
         public event EventHandler<string>? BotPostOrStatusChanged;
         private readonly IBotData? _botData;
 
-        public BotService(IGroupRepo groupRepo, PostsContext postsContext, CancellationTokenSource? cts, IBotData? botData)
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext, IBotData botData)
         {
-            _postContext = postsContext;
-            this._cts = cts;
-            _botData = botData;
-            _groupRepo = groupRepo;
-
+            _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
+            _groupRepo = groupRepo ?? throw new ArgumentNullException(nameof(groupRepo));
+            _botData = botData ?? throw new ArgumentNullException(nameof(botData));
             _activeBots = _postContext.Bots
                 .Where(bot => bot.IsActive)
                 .ToDictionary(
                     bot => bot.Token,
                     bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource(),
-                    new UpdateHandler(_groupRepo, bot.Token))
+                            new UpdateHandler(_groupRepo, bot.Token))
                 );
         }
 

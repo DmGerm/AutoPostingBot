@@ -1,7 +1,6 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AutoPost_Bot.BotRepo;
-using AutoPost_Bot.Components;
 using AutoPost_Bot.Data;
 using AutoPost_Bot.PostsRepository;
 using AutoPost_Bot.ScheduleService;
@@ -20,6 +19,9 @@ public class Program
         builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
             .ConfigureContainer<ContainerBuilder>(cb =>
             {
+                cb.RegisterType<BotData>()
+                    .As<IBotData>().InstancePerLifetimeScope();
+
                 cb.RegisterType<BotService>()
                     .As<IBotService>()
                     .SingleInstance();
@@ -32,9 +34,11 @@ public class Program
 
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
-                
-                cb.RegisterType<BotData>()
-                    .As<IBotData>().InstancePerLifetimeScope();
+
+
+                cb.RegisterType<PostSchedulerService>()
+                     .As<IHostedService>()
+                     .SingleInstance();
 
                 Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "DbData"));
                 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "DbData");
@@ -59,7 +63,6 @@ public class Program
                 }).InstancePerDependency();
             });
 
-        builder.Services.AddHostedService<PostSchedulerService>();
         builder.Services.AddHttpContextAccessor();
 
         // Add services to the container.

@@ -8,7 +8,6 @@ namespace AutoPost_Bot.BotRepo
     {
         private readonly PostsContext _postContext;
         private readonly IBotService _botService;
-        private event EventHandler<string>? BotDataBaseUpdated;
         public BotData(PostsContext postsContext, IBotService botService)
         {
             _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
@@ -52,7 +51,6 @@ namespace AutoPost_Bot.BotRepo
                         IsActive = botStatus
                     });
                     _postContext.SaveChanges();
-                    BotDataBaseUpdated?.Invoke(this, botToken);
                 }
             }
             catch (Exception ex)
@@ -75,7 +73,6 @@ namespace AutoPost_Bot.BotRepo
             try
             {
                 _postContext.Bots.Update(model);
-                BotDataBaseUpdated?.Invoke(this, model.Token);
                 return _postContext.SaveChangesAsync();
             }
             catch (Exception ex)
