@@ -8,3 +8,4 @@ namespace AutoPost_Bot.BotRepo
         Task UpdateBotModel(BotModel model);
     }
 }
+

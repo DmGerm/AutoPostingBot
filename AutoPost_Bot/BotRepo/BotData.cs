@@ -8,11 +8,9 @@ namespace AutoPost_Bot.BotRepo
     {
         private readonly PostsContext _postContext;
         private readonly IBotService _botService;
-        public BotData(PostsContext postsContext, IBotService botService)
+        public BotData(PostsContext postsContext)
         {
             _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
-            _botService = botService ?? throw new ArgumentNullException(nameof(botService));
-            _botService.BotStatusChanged += UpdateBotStatusInDatabase;
 
             if (_postContext.Bots == null)
             {
@@ -30,38 +28,6 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        private void UpdateBotStatus(string botToken, bool botStatus)
-        {
-            try
-            {
-                if (_postContext is null)
-                    throw new InvalidOperationException("Database context is not available.");
-
-                var bot = _postContext.Bots.FirstOrDefault(b => b.Token == botToken);
-                if (bot != null)
-                {
-                    bot.IsActive = botStatus;
-                    _postContext.SaveChanges();
-                }
-                else
-                {
-                    _postContext.Bots.Add(new Models.BotModel
-                    {
-                        Token = botToken,
-                        IsActive = botStatus
-                    });
-                    _postContext.SaveChanges();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Exception in UpdateBotStatus: {ex.Message}");
-                Console.WriteLine(ex.StackTrace);
-                throw;
-            }
-        }
-
-        private void UpdateBotStatusInDatabase(string botToken, bool botStatus) => UpdateBotStatus(botToken, botStatus);
         public List<string> GetAllBotTokensFromDb() => _postContext.Bots.Select(b => b.Token).ToList();
 
         public List<BotModel>? GetAllBots() => _postContext.Bots
