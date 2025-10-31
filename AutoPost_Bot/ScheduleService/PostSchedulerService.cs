@@ -24,9 +24,11 @@ namespace AutoPost_Bot.ScheduleService
 
             activeBots = _botService.GetActiveBots();
 
+            var activeBotTokens = activeBots.Keys.ToList();
+
             botModelsDict = _postsContext.Bots
                .Include(b => b.Posts)
-               .Where(b => activeBots.ContainsKey(b.Token))
+               .Where(b => activeBotTokens.Contains(b.Token))
                .ToDictionary(b => b.Token, b => b);
 
             _botService.BotPostOrStatusChanged += BotDataBaseUpdated_EventHandler;

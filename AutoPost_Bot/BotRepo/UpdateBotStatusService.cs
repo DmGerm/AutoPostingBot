@@ -2,10 +2,17 @@
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class UpdateBotStatusService(PostsContext postContext)
+    public class UpdateBotStatusService
     {
-        private readonly PostsContext? _postContext = postContext;
-        _botService.BotStatusChanged += UpdateBotStatusInDatabase;
+        private readonly IBotService _botService;
+        private readonly PostsContext? _postContext;
+        public UpdateBotStatusService(IBotService botService, PostsContext? postContext)
+        {
+            _botService = botService;
+            _postContext = postContext;
+            _botService.BotStatusChanged += UpdateBotStatusInDatabase;
+        }
+
         private void UpdateBotStatus(string botToken, bool botStatus)
         {
             try

@@ -7,7 +7,6 @@ namespace AutoPost_Bot.BotRepo
     public class BotData : IBotData
     {
         private readonly PostsContext _postContext;
-        private readonly IBotService _botService;
         public BotData(PostsContext postsContext)
         {
             _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
