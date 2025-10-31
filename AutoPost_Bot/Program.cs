@@ -36,13 +36,13 @@ public class Program
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
 
-                cb.RegisterType<UpdateBotStatusService>()
-                    .As<IHostedService>()
-                    .SingleInstance();
-
                 cb.RegisterType<PostSchedulerService>()
                      .As<IHostedService>()
                      .SingleInstance();
+
+                cb.RegisterType<UpdateBotStatusService>()
+                      .SingleInstance();
+
 
                 Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "DbData"));
                 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "DbData");
