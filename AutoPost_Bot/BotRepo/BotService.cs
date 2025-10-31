@@ -9,7 +9,6 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotService : IBotService
     {
-        private readonly CancellationTokenSource? _cts;
         private UpdateHandler? _updateHandler;
         private readonly PostsContext? _postContext;
         private readonly IGroupRepo _groupRepo;
@@ -20,10 +19,13 @@ namespace AutoPost_Bot.BotRepo
         public event EventHandler<string>? BotPostOrStatusChanged;
         private readonly IBotData? _botData;
 
-        public BotService(IGroupRepo groupRepo, PostsContext postsContext)
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext, UpdateHandler updateHandler, IBotData botData)
         {
             _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
             _groupRepo = groupRepo ?? throw new ArgumentNullException(nameof(groupRepo));
+            _updateHandler = updateHandler ?? throw new ArgumentNullException(nameof(updateHandler));
+            _botData = botData ?? throw new ArgumentNullException(nameof(botData));
+
             _activeBots = _postContext.Bots
                 .Where(bot => bot.IsActive)
                 .ToDictionary(
@@ -67,8 +69,6 @@ namespace AutoPost_Bot.BotRepo
 
                 if (bot == null)
                     throw new InvalidOperationException("Bot has not been started yet.");
-
-                _cts?.Cancel();
 
                 bot.Value.Cts.Cancel();
 

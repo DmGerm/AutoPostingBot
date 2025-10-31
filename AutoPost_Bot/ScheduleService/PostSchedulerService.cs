@@ -10,7 +10,8 @@ namespace AutoPost_Bot.ScheduleService
 {
     public class PostSchedulerService(IBotService botService, PostsContext postsContext, IGroupRepo groupRepo) : BackgroundService
     {
-        private readonly IBotService _botService = botService;
+        private readonly IBotService _botService = botService
+            ?? throw new Exception("Exception in PostScheduler, botService can't be null.");
         private readonly PostsContext _postsContext = postsContext
             ?? throw new Exception("Exception in PostScheduler, context can't be null.");
         private readonly IGroupRepo _groupRepo = groupRepo

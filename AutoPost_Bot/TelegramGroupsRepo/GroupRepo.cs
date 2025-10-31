@@ -44,6 +44,9 @@ public class GroupRepo(PostsContext dbContext) : IGroupRepo
             var group = await _dbContext.Groups.FirstOrDefaultAsync(g => g.GroupId == groupId)
                         ?? throw new Exception("Group with this id not found in db.");
 
+            if (group.Bots == null)
+                throw new Exception("Exeption in RemoveGroupAsync: Bots collection is null.");
+
             if (group.Bots.All(bot => bot.Token != botToken))
                 throw new Exception("This bot is not associated with the group.");
             else

@@ -36,6 +36,9 @@ public class Program
                 cb.RegisterType<GroupRepo>()
                     .As<IGroupRepo>().SingleInstance();
 
+                cb.RegisterType<UpdateBotStatusService>()
+                    .As<IHostedService>()
+                    .SingleInstance();
 
                 cb.RegisterType<PostSchedulerService>()
                      .As<IHostedService>()

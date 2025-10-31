@@ -21,7 +21,7 @@ public class PostsRepo(PostsContext postsContext) : IPostsRepo
             }
             else
             {
-                throw new Exception("Posts not found");
+                return new List<PostModel>();
             }
         }
         catch (Exception e)
