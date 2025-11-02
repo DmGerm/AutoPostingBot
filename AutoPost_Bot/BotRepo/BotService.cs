@@ -2,6 +2,7 @@
 using AutoPost_Bot.Handlers;
 using AutoPost_Bot.Models;
 using AutoPost_Bot.TelegramGroupsRepo;
+using System.Collections.Concurrent;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 
@@ -11,26 +12,18 @@ namespace AutoPost_Bot.BotRepo
     {
         private readonly PostsContext _postContext;
         private readonly IGroupRepo _groupRepo;
-        private readonly Dictionary<string, (TelegramBotClient Client,
-                                      CancellationTokenSource Cts,
-                                      UpdateHandler Handler)> _activeBots;
+        private readonly IBotData? _botData;
+
+        private readonly ConcurrentDictionary<string, (TelegramBotClient Client, CancellationTokenSource Cts, UpdateHandler Handler)> _activeBots = new();
+
         public event Action<string, bool>? BotStatusChanged;
         public event EventHandler<string>? BotPostOrStatusChanged;
-        private readonly IBotData? _botData;
 
         public BotService(IGroupRepo groupRepo, PostsContext postsContext, IBotData? botData)
         {
             _groupRepo = groupRepo ?? throw new InvalidOperationException("Group repository is not available.");
             _postContext = postsContext ?? throw new InvalidOperationException("Database context is not available.");
             _botData = botData;
-
-            _activeBots = _postContext.Bots
-                .Where(bot => bot.IsActive)
-                .ToDictionary(
-                    bot => bot.Token,
-                    bot => (new TelegramBotClient(bot.Token), new CancellationTokenSource(),
-                            new UpdateHandler(_groupRepo, bot.Token))
-                );
         }
 
         public async Task<TelegramBotClient> GetBotClient(string botToken)
@@ -38,96 +31,41 @@ namespace AutoPost_Bot.BotRepo
             if (string.IsNullOrEmpty(botToken))
                 throw new InvalidOperationException("Bot token is not provided!");
 
-            if (_postContext is null)
-                throw new InvalidOperationException("Database context is not available.");
-            try
-            {
-                var bot = _activeBots?.GetValueOrDefault(botToken);
+            if (!_activeBots.TryGetValue(botToken, out var bot))
+                throw new InvalidOperationException("Bot has not been started yet.");
 
-                if (bot == null)
-                    throw new InvalidOperationException("Bot has not been started yet.");
-                return await Task.FromResult(bot.Value.Client);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Exception in GetBotClient: {ex.Message}");
-                Console.WriteLine(ex.StackTrace);
-                throw;
-            }
-        }
-
-        public Task StopBot(string botToken)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(botToken))
-                    throw new InvalidOperationException("Bot token is not provided!");
-
-                var bot = _activeBots?.GetValueOrDefault(botToken);
-
-                if (bot == null)
-                    throw new InvalidOperationException("Bot has not been started yet.");
-
-                bot.Value.Cts.Cancel();
-
-                BotStatusChanged?.Invoke(botToken, false);
-
-                _activeBots?.Remove(botToken);
-
-                BotPostOrStatusChanged?.Invoke(this, botToken);
-
-                return Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Exception in StopBot: {ex.Message}");
-                Console.WriteLine(ex.StackTrace);
-                return Task.CompletedTask;
-            }
+            return await Task.FromResult(bot.Client);
         }
 
         public async Task<TelegramBotClient> StartBot(string botToken)
         {
             try
             {
-                if (string.IsNullOrEmpty(botToken))
-                {
+                if (string.IsNullOrWhiteSpace(botToken))
                     throw new InvalidOperationException("Bot token is not provided!");
-                }
 
-                if (_activeBots is null)
-                {
-                    throw new InvalidOperationException("Bots dictionary is not initialized.");
-                }
-                if (!_activeBots.TryAdd(botToken, (new TelegramBotClient(botToken), new CancellationTokenSource(), new UpdateHandler(_groupRepo, botToken))))
-                {
+                if (_activeBots.ContainsKey(botToken))
                     throw new InvalidOperationException("Bot is already started.");
-                }
 
-                if (!_activeBots.TryGetValue(botToken, out var botValue))
-                {
-                    throw new InvalidOperationException("Failed to retrieve the bot after adding it.");
-                }
+                var cts = new CancellationTokenSource();
+                var client = new TelegramBotClient(botToken, cancellationToken: cts.Token);
+                var handler = new UpdateHandler(_groupRepo, botToken);
 
-                var me = await botValue.Client.GetMe();
+                await client.DeleteWebhook();
+
+                var me = await client.GetMe();
+
+                if (!_activeBots.TryAdd(botToken, (client, cts, handler)))
+                    throw new InvalidOperationException("Failed to register bot in active list.");
+
+                client.OnUpdate += handler.OnUpdate;
+                client.OnError += OnError;
 
                 BotStatusChanged?.Invoke(botToken, true);
-
-                var updateHandler = new UpdateHandler(_groupRepo, botToken);
-
-                if (updateHandler is null)
-                {
-                    throw new InvalidOperationException("Update handler is not initialized.");
-                }
-
-                botValue.Client.OnUpdate += updateHandler.OnUpdate;
-                botValue.Client.OnError += OnError;
-
                 BotPostOrStatusChanged?.Invoke(this, botToken);
 
-                Console.WriteLine($"@{me.Username} is running... Press Enter to terminate");
-
-                return botValue.Client;
+                Console.WriteLine($"✅ @{me.Username} is running...");
+                return client;
             }
             catch (Exception ex)
             {
@@ -137,21 +75,43 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        private Task OnError(Exception exception, HandleErrorSource source)
+        public async Task StopBot(string botToken)
         {
-            return Task.Run(() =>
+            try
             {
-                Console.WriteLine($"Error Source: {source}");
-                Console.WriteLine($"Exception: {exception.Message}");
-                Console.WriteLine(exception.StackTrace);
-            });
+                if (string.IsNullOrEmpty(botToken))
+                    throw new InvalidOperationException("Bot token is not provided!");
+
+                if (!_activeBots.TryRemove(botToken, out var bot))
+                    throw new InvalidOperationException("Bot has not been started yet.");
+
+                bot.Cts.Cancel();
+
+                bot.Client.OnUpdate -= bot.Handler.OnUpdate;
+                bot.Client.OnError -= OnError;
+
+                BotStatusChanged?.Invoke(botToken, false);
+                BotPostOrStatusChanged?.Invoke(this, botToken);
+
+                Console.WriteLine($"🛑 Bot with token ending {botToken[^6..]} stopped.");
+
+                await Task.CompletedTask;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception in StopBot: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
         public bool IsBotActive(string botToken) =>
-            _activeBots != null ? _activeBots.TryGetValue(botToken, out var bot)
-                : throw new InvalidOperationException("bot list is not provided.");
+            _activeBots.ContainsKey(botToken);
 
-        public List<BotModel> GetBotModels() => _botData?.GetAllBots() ?? [];
+        public Dictionary<string, TelegramBotClient> GetActiveBots() =>
+            _activeBots.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Client);
+
+        public List<BotModel> GetBotModels() =>
+            _botData?.GetAllBots() ?? [];
 
         public async Task UpdateBotModel(BotModel model)
         {
@@ -161,7 +121,6 @@ namespace AutoPost_Bot.BotRepo
                     throw new InvalidOperationException("Bot data service is not available.");
 
                 BotPostOrStatusChanged?.Invoke(this, model.Token);
-
                 await _botData.UpdateBotModel(model);
             }
             catch (Exception ex)
@@ -172,12 +131,14 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        public Dictionary<string, TelegramBotClient> GetActiveBots()
+        private Task OnError(Exception exception, HandleErrorSource source)
         {
-            return _activeBots?.ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.Client
-            ) ?? new Dictionary<string, TelegramBotClient>();
+            return Task.Run(() =>
+            {
+                Console.WriteLine($"⚠️ Telegram Error Source: {source}");
+                Console.WriteLine($"Exception: {exception.Message}");
+                Console.WriteLine(exception.StackTrace);
+            });
         }
     }
 }
