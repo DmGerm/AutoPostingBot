@@ -8,134 +8,144 @@ using Telegram.Bot.Exceptions;
 
 namespace AutoPost_Bot.ScheduleService
 {
-    public class PostSchedulerService(IBotService botService, PostsContext postsContext, IGroupRepo groupRepo) : BackgroundService
+    public class PostSchedulerService : BackgroundService
     {
-        private readonly IBotService _botService = botService
-            ?? throw new Exception("Exception in PostScheduler, botService can't be null.");
-        private readonly PostsContext _postsContext = postsContext
-            ?? throw new Exception("Exception in PostScheduler, context can't be null.");
-        private readonly IGroupRepo _groupRepo = groupRepo
-            ?? throw new Exception("Exception in PostScheduler, groupRepo can't be null.");
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IBotService _botService;
+        private readonly IGroupRepo _groupRepo;
 
-        Dictionary<string, BotModel> botModelsDict = [];
-        Dictionary<string, TelegramBotClient> activeBots = [];
+        private Dictionary<string, BotModel> _botModels = [];
+        private Dictionary<string, TelegramBotClient> _activeBots = [];
+
+        public PostSchedulerService(
+            IServiceScopeFactory scopeFactory,
+            IBotService botService,
+            IGroupRepo groupRepo)
+        {
+            _scopeFactory = scopeFactory;
+            _botService = botService;
+            _groupRepo = groupRepo;
+        }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<PostsContext>();
 
-            activeBots = _botService.GetActiveBots();
+                _activeBots = _botService.GetActiveBots();
+                var activeBotTokens = _activeBots.Keys.ToList();
 
-            var activeBotTokens = activeBots.Keys.ToList();
+                _botModels = await db.Bots
+                    .Include(b => b.Posts)
+                    .Where(b => activeBotTokens.Contains(b.Token))
+                    .ToDictionaryAsync(b => b.Token, b => b, cancellationToken: stoppingToken);
+            }
 
-            botModelsDict = _postsContext.Bots
-               .Include(b => b.Posts)
-               .Where(b => activeBotTokens.Contains(b.Token))
-               .ToDictionary(b => b.Token, b => b);
-
-            _botService.BotPostOrStatusChanged += BotDataBaseUpdated_EventHandler;
+            _botService.BotPostOrStatusChanged += OnBotDataChanged;
 
             while (!stoppingToken.IsCancellationRequested)
             {
-
-                var now = DateTime.UtcNow.AddHours(3);
-                var currentDayOfWeek = ConvertDayOfWeek(DateTime.Now.DayOfWeek);
-
-                foreach (var bot in botModelsDict)
+                try
                 {
-                    if (bot.Value.Posts is null || bot.Value.Posts.Count == 0)
-                        continue;
-
-                    foreach (var post in bot.Value.Posts)
-                        if (now >= post.PostDateTime)
-                        {
-                            if (post.GroupId != 0 && post.Days.HasFlag(currentDayOfWeek))
-                            {
-                                try
-                                {
-                                    await activeBots[bot.Value.Token].SendMessage(
-                                                      chatId: post.GroupId,
-                                                      text: post.PostText ?? string.Empty,
-                                                      cancellationToken: stoppingToken
-                                                  );
-
-                                }
-                                catch (ApiRequestException ex)
-                                {
-                                    if (ex.ErrorCode == 404)
-                                    {
-                                        Console.WriteLine($"Группа с  ID {post.GroupId} не найдена. Удаление группы из БД.");
-                                        await groupRepo.RemoveGroupAsync(post.GroupId, bot.Value.Token);
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine($"Ошибка отправки сообщения в группу {post.GroupId}: {ex.Message}");
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine(ex.Message);
-                                }
-                            }
-                            try
-                            {
-                                if (post.RepeatDays > 0 || post.RepeatHours > 0 || post.RepeatMinutes > 0)
-                                {
-                                    post.PostDateTime = post.PostDateTime
-                                        .AddDays(post.RepeatDays)
-                                        .AddHours(post.RepeatHours)
-                                        .AddMinutes(post.RepeatMinutes);
-                                }
-                                else
-                                {
-                                    post.PostDateTime = DateTime.MaxValue;
-                                }
-                                bot.Value.Posts.Find(p => p.Id == post.Id)!.PostDateTime = post.PostDateTime;
-
-                                await botService.UpdateBotModel(bot.Value);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
-                        }
+                    await CheckAndSendPosts(stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                }
+                catch (TaskCanceledException)
+                {
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Scheduler] Ошибка: {ex.Message}");
                 }
             }
+        }
 
+        private async Task CheckAndSendPosts(CancellationToken token)
+        {
+            var now = DateTime.UtcNow.AddHours(3);
+            var currentDay = ConvertDayOfWeek(DateTime.Now.DayOfWeek);
+
+            foreach (var (tokenKey, bot) in _botModels)
+            {
+                if (bot.Posts is null || bot.Posts.Count == 0)
+                    continue;
+
+                foreach (var post in bot.Posts.Where(p => now >= p.PostDateTime && p.Days.HasFlag(currentDay)))
+                {
+                    try
+                    {
+                        await _activeBots[tokenKey].SendMessage(
+                            chatId: post.GroupId,
+                            text: post.PostText ?? string.Empty,
+                            cancellationToken: token
+                        );
+                    }
+                    catch (ApiRequestException ex) when (ex.ErrorCode == 404)
+                    {
+                        Console.WriteLine($"Группа {post.GroupId} не найдена. Удаляем из БД.");
+                        await _groupRepo.RemoveGroupAsync(post.GroupId, bot.Token);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при отправке: {ex.Message}");
+                    }
+
+                    await UpdatePostSchedule(bot, post);
+                }
+            }
+        }
+
+        private async Task UpdatePostSchedule(BotModel bot, PostModel post)
+        {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                if (post.RepeatDays > 0 || post.RepeatHours > 0 || post.RepeatMinutes > 0)
+                {
+                    post.PostDateTime = post.PostDateTime
+                        .AddDays(post.RepeatDays)
+                        .AddHours(post.RepeatHours)
+                        .AddMinutes(post.RepeatMinutes);
+                }
+                else
+                {
+                    post.PostDateTime = DateTime.MaxValue;
+                }
+
+                bot.Posts.Find(p => p.Id == post.Id)!.PostDateTime = post.PostDateTime;
+                await _botService.UpdateBotModel(bot);
             }
-            catch (TaskCanceledException)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Ошибка при обновлении поста: {ex.Message}");
             }
         }
 
-        private Days ConvertDayOfWeek(DayOfWeek dayOfWeek)
+        private Days ConvertDayOfWeek(DayOfWeek dayOfWeek) => dayOfWeek switch
         {
-            return dayOfWeek switch
-            {
-                DayOfWeek.Monday => Days.Monday,
-                DayOfWeek.Tuesday => Days.Tuesday,
-                DayOfWeek.Wednesday => Days.Wednesday,
-                DayOfWeek.Thursday => Days.Thursday,
-                DayOfWeek.Friday => Days.Friday,
-                DayOfWeek.Saturday => Days.Saturday,
-                DayOfWeek.Sunday => Days.Sunday,
-                _ => Days.None
-            };
-        }
+            DayOfWeek.Monday => Days.Monday,
+            DayOfWeek.Tuesday => Days.Tuesday,
+            DayOfWeek.Wednesday => Days.Wednesday,
+            DayOfWeek.Thursday => Days.Thursday,
+            DayOfWeek.Friday => Days.Friday,
+            DayOfWeek.Saturday => Days.Saturday,
+            DayOfWeek.Sunday => Days.Sunday,
+            _ => Days.None
+        };
 
-        private void BotDataBaseUpdated_EventHandler(object? sender, string e)
+        private void OnBotDataChanged(object? sender, string token)
         {
-            BotModel? updatedBot = postsContext.Bots
-            .Include(b => b.Posts)
-            .FirstOrDefault(b => b.Token == e);
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<PostsContext>();
+
+            var updatedBot = db.Bots
+                .Include(b => b.Posts)
+                .FirstOrDefault(b => b.Token == token);
 
             if (updatedBot != null)
-            {
-                botModelsDict[e] = updatedBot;
-            }
-            activeBots = _botService.GetActiveBots();
+                _botModels[token] = updatedBot;
+
+            _activeBots = _botService.GetActiveBots();
         }
     }
 }

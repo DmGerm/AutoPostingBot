@@ -9,7 +9,7 @@ namespace AutoPost_Bot.BotRepo
 {
     public class BotService : IBotService
     {
-        private readonly PostsContext? _postContext;
+        private readonly PostsContext _postContext;
         private readonly IGroupRepo _groupRepo;
         private readonly Dictionary<string, (TelegramBotClient Client,
                                       CancellationTokenSource Cts,
@@ -18,11 +18,11 @@ namespace AutoPost_Bot.BotRepo
         public event EventHandler<string>? BotPostOrStatusChanged;
         private readonly IBotData? _botData;
 
-        public BotService(IGroupRepo groupRepo, PostsContext postsContext, IBotData botData)
+        public BotService(IGroupRepo groupRepo, PostsContext postsContext, IBotData? botData)
         {
-            _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
-            _groupRepo = groupRepo ?? throw new ArgumentNullException(nameof(groupRepo));
-            _botData = botData ?? throw new ArgumentNullException(nameof(botData));
+            _groupRepo = groupRepo ?? throw new InvalidOperationException("Group repository is not available.");
+            _postContext = postsContext ?? throw new InvalidOperationException("Database context is not available.");
+            _botData = botData;
 
             _activeBots = _postContext.Bots
                 .Where(bot => bot.IsActive)
@@ -113,12 +113,14 @@ namespace AutoPost_Bot.BotRepo
 
                 BotStatusChanged?.Invoke(botToken, true);
 
-                if (_updateHandler is null)
+                var updateHandler = new UpdateHandler(_groupRepo, botToken);
+
+                if (updateHandler is null)
                 {
                     throw new InvalidOperationException("Update handler is not initialized.");
                 }
 
-                botValue.Client.OnUpdate += _updateHandler.OnUpdate;
+                botValue.Client.OnUpdate += updateHandler.OnUpdate;
                 botValue.Client.OnError += OnError;
 
                 BotPostOrStatusChanged?.Invoke(this, botToken);
