@@ -24,8 +24,7 @@ public class Program
                     .As<IBotData>().InstancePerLifetimeScope();
 
                 cb.RegisterType<BotService>()
-                    .As<IBotService>()
-                    .SingleInstance();
+                    .As<IBotService>();
 
                 cb.RegisterType<PostsRepo>()
                     .As<IPostsRepo>().InstancePerLifetimeScope();

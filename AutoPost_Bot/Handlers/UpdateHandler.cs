@@ -6,8 +6,6 @@ namespace AutoPost_Bot.Handlers
 {
     public class UpdateHandler(IGroupRepo groupRepo, string botToken)
     {
-        private readonly string _botToken = botToken;
-        private readonly IGroupRepo _groupRepo = groupRepo;
         public async Task OnUpdate(Update update)
         {
             ArgumentNullException.ThrowIfNull(update);
@@ -26,7 +24,7 @@ namespace AutoPost_Bot.Handlers
 
                     try
                     {
-                        await Task.Run(() => _groupRepo.AddGroup(update.MyChatMember.Chat.Id, update.MyChatMember.Chat.Title, _botToken));
+                        await Task.Run(() => groupRepo.AddGroup(update.MyChatMember.Chat.Id, update.MyChatMember.Chat.Title, botToken));
                     }
                     catch (Exception ex)
                     {
@@ -42,7 +40,7 @@ namespace AutoPost_Bot.Handlers
                         return;
                     try
                     {
-                        await Task.Run(() => _groupRepo.RemoveGroupAsync(update.MyChatMember.Chat.Id, _botToken));
+                        await Task.Run(() => groupRepo.RemoveGroupAsync(update.MyChatMember.Chat.Id, botToken));
                     }
                     catch (Exception ex)
                     {

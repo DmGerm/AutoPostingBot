@@ -51,9 +51,9 @@ namespace AutoPost_Bot.BotRepo
                 var client = new TelegramBotClient(botToken, cancellationToken: cts.Token);
                 var handler = new UpdateHandler(_groupRepo, botToken);
 
-                await client.DeleteWebhook();
+                await client.DeleteWebhook(cancellationToken: cts.Token);
 
-                var me = await client.GetMe();
+                var me = await client.GetMe(cancellationToken: cts.Token);
 
                 if (!_activeBots.TryAdd(botToken, (client, cts, handler)))
                     throw new InvalidOperationException("Failed to register bot in active list.");
