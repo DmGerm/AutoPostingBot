@@ -13,7 +13,7 @@ namespace AutoPost_Bot.BotRepo
             _botService.BotStatusChanged += UpdateBotStatusInDatabase;
         }
 
-        private void UpdateBotStatus(string botToken, bool botStatus)
+        private void UpdateBotStatus(Guid BotId, bool botStatus)
         {
             try
             {
@@ -24,7 +24,6 @@ namespace AutoPost_Bot.BotRepo
                 if (bot != null)
                 {
                     bot.IsActive = botStatus;
-                    _postContext.SaveChanges();
                 }
                 else
                 {
@@ -33,8 +32,9 @@ namespace AutoPost_Bot.BotRepo
                         Token = botToken,
                         IsActive = botStatus
                     });
-                    _postContext.SaveChanges();
                 }
+
+                _postContext.SaveChanges();
             }
             catch (Exception ex)
             {

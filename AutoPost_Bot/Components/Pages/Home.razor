@@ -135,62 +135,62 @@
                             <div class="btn-group btn-group-sm" role="group" aria-label="Repeat days checkboxes">
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Monday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Monday)">
                                 <label class="btn btn-outline-primary" 
-                                       for=@($"btncheck{buttonCount++}")>Пн</label>
+                                       for=@($"btncheck{_buttonCount++}")>Пн</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Tuesday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Tuesday)">
                                 <label class="btn btn-outline-primary" 
-                                       for=@($"btncheck{buttonCount++}")>Вт</label>
+                                       for=@($"btncheck{_buttonCount++}")>Вт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Wednesday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Wednesday)">
                                 <label class="btn btn-outline-primary"
-                                       for=@($"btncheck{buttonCount++}")>Ср</label>
+                                       for=@($"btncheck{_buttonCount++}")>Ср</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Thursday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Thursday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Чт</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Чт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Friday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Friday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Пт</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Пт</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Saturday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Saturday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Сб</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Сб</label>
 
                                 <input type="checkbox"
                                        class="btn-check"
-                                       id=@($"btncheck{buttonCount}")
+                                       id=@($"btncheck{_buttonCount}")
                                        autocomplete="off"
                                        checked="@IsDayChecked(post, Days.Sunday)"
                                        @onchange="() => DayAddOrRemove(post, Days.Sunday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{buttonCount++}")>Вс</label>
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Вс</label>
                             </div>
                         </div>
                     </div>
@@ -224,14 +224,14 @@
 	private string _errorMessage = string.Empty;
 	private string _statusMessage = string.Empty;
 	private bool _isDisposed;
-	private int buttonCount = 1;
-	private int _selectedBotIndex = 0;
+	private int _buttonCount = 1;
+	private readonly int _selectedBotIndex = 0;
 
 	protected override async Task OnInitializedAsync()
 	{
 		try
 		{
-			buttonCount = 1;
+			_buttonCount = 1;
 			_allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
 													.ToDictionary(x => x.Item1, x => x.Item2)
 													?? throw new Exception(@"Exception in Home, can't load boats.");
@@ -239,11 +239,13 @@
 			if (_allBots.Count == 0)
 			{
 				_allBots[0] = new BotModel
-                {
+                {   
+                    BotId = Guid.NewGuid(),
                     Token = string.Empty,
                     IsActive = false,
                     Groups = new List<GroupModel>()
 				};
+              
 			}
 
 			_allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
@@ -257,7 +259,7 @@
 		}
 	}
 
-	private string GetGroupName(GroupModel group)
+	private string GetGroupName(GroupModel? group)
 	{
 		if (group == null)
 			return "Выберите канал или группу";
@@ -316,7 +318,7 @@
 
     private void AddPost()
     {
-        _allBots[_selectedBotIndex].Posts.Add(new PostModel
+        _allBots[_selectedBotIndex].Posts?.Add(new PostModel
         {
             Id = Guid.NewGuid(),
             PostText = string.Empty,
@@ -365,9 +367,10 @@
     {
         try
         {
-            await InvokeAsync(async () =>
+            await InvokeAsync(() =>
             {
                 StateHasChanged();
+                return Task.CompletedTask;
             });
         }
         catch (Exception e)

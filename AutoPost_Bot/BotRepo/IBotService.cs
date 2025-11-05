@@ -5,10 +5,10 @@ namespace AutoPost_Bot.BotRepo
 {
     public interface IBotService
     {
-        public Task<TelegramBotClient> StartBot(string botToken);
-        public Task<TelegramBotClient> GetBotClient(string botToken);
-        public Task StopBot(string botToken);
-        public bool IsBotActive(string botToken);
+        public Task<TelegramBotClient> StartBot(Guid botId, string botToken);
+        public Task<TelegramBotClient> GetBotClient(Guid botId, string botToken);
+        public Task StopBot(Guid botId);
+        public bool IsBotActive(Guid botId);
         public event Action<string, bool>? BotStatusChanged;
         public event EventHandler<string>? BotPostOrStatusChanged;
         public List<BotModel> GetBotModels();

@@ -12,9 +12,10 @@ namespace AutoPost_Bot.Data
         {
             modelBuilder.Entity<BotModel>(bot =>
             {
-                bot.HasKey(x => x.Token).HasName("Bot_token");
+                
+                bot.HasKey(x => x.BotId).HasName("Bot_Id");
 
-                bot.Property(x => x.Token).HasColumnType("TEXT")
+                bot.Property(x => x.BotId).HasColumnType("TEXT")
                                       .ValueGeneratedNever();
 
                 bot.HasIndex(x => x.Token).IsUnique().HasDatabaseName("IX_Bots_Token");
