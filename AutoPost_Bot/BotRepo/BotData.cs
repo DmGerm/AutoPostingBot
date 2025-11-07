@@ -33,19 +33,7 @@ namespace AutoPost_Bot.BotRepo
             .Include(bot => bot.Groups)
             .ToList();
 
-        public Task UpdateBotModel(BotModel model)
-        {
-            try
-            {
-                _postContext.Bots.Update(model);
-                return _postContext.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"❌ Exception in UpdateBotModel: {ex.Message}");
-                Console.WriteLine(ex.StackTrace);
-                throw;
-            }
-        }
+        public BotModel? GetBot(Guid botId) =>
+            _postContext.Bots.FirstOrDefault(bot => bot.BotId == botId);
     }
 }

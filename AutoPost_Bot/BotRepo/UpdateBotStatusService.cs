@@ -1,4 +1,5 @@
 ﻿using AutoPost_Bot.Data;
+using AutoPost_Bot.Models;
 
 namespace AutoPost_Bot.BotRepo
 {
@@ -10,40 +11,35 @@ namespace AutoPost_Bot.BotRepo
         {
             _botService = botService;
             _postContext = postContext;
-            _botService.BotStatusChanged += UpdateBotStatusInDatabase;
+            _botService.BotModelUpdateInDb += UpdateBotModelInDb;
         }
 
-        private void UpdateBotStatus(Guid BotId, bool botStatus)
+        private void UpdateBotModelInDb(BotModel botModel)
         {
             try
             {
-                if (_postContext is null)
+                if (_postContext == null)
                     throw new InvalidOperationException("Database context is not available.");
 
-                var bot = _postContext.Bots.FirstOrDefault(b => b.Token == botToken);
-                if (bot != null)
+                var existingBot = _postContext.Bots.Find(botModel.BotId);
+
+                if (existingBot == null)
                 {
-                    bot.IsActive = botStatus;
+                    _postContext.Bots.Add(botModel);
                 }
                 else
                 {
-                    _postContext.Bots.Add(new Models.BotModel
-                    {
-                        Token = botToken,
-                        IsActive = botStatus
-                    });
+                    _postContext.Entry(existingBot).CurrentValues.SetValues(botModel);
                 }
 
                 _postContext.SaveChanges();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Exception in UpdateBotStatus: {ex.Message}");
+                Console.WriteLine($"❌ Exception in UpdateBotModelInDb: {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
                 throw;
             }
         }
-
-        private void UpdateBotStatusInDatabase(string botToken, bool botStatus) => UpdateBotStatus(botToken, botStatus);
     }
 }

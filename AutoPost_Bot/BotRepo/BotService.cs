@@ -18,15 +18,13 @@ namespace AutoPost_Bot.BotRepo
 
         private readonly ConcurrentDictionary<Guid, (TelegramBotClient Client, CancellationTokenSource Cts, UpdateHandler Handler)> _activeBots = new();
 
-        public event Action<Guid, bool>? BotStatusChanged;
-        public event EventHandler<Guid>? BotPostOrStatusChanged;
+        public event Action<BotModel>? BotModelUpdateInDb;
+        public event EventHandler<BotModel>? BotPostOrStatusChanged;
 
-        public async Task<TelegramBotClient> GetBotClient(string botToken)
+        public async Task<TelegramBotClient> GetBotClient(Guid botId)
         {
-            if (string.IsNullOrEmpty(botToken))
-                throw new InvalidOperationException("Bot token is not provided!");
 
-            if (!_activeBots.TryGetValue(botToken, out var bot))
+            if (!_activeBots.TryGetValue(botId, out var bot))
                 throw new InvalidOperationException("Bot has not been started yet.");
 
             return await Task.FromResult(bot.Client);
@@ -54,10 +52,18 @@ namespace AutoPost_Bot.BotRepo
                     throw new InvalidOperationException("Failed to register bot in active list.");
 
                 client.OnUpdate += handler.OnUpdate;
-                client.OnError += OnError;
+                client.OnError += OnError;  
 
-                BotStatusChanged?.Invoke(botId, true);
-                BotPostOrStatusChanged?.Invoke(this, botId);
+                BotModel bot = botData?.GetBot(botId)
+                    ?? new()
+                {
+                    BotId = Guid.NewGuid(),
+                    Token = botToken,
+                    IsActive = true
+                };
+
+                BotModelUpdateInDb?.Invoke(bot);
+                BotPostOrStatusChanged?.Invoke(this, bot);
 
                 Console.WriteLine($"✅ @{me.Username} is running...");
                 return client;
@@ -70,14 +76,11 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        public async Task StopBot(string botToken)
+        public async Task StopBot(Guid botId)
         {
             try
             {
-                if (string.IsNullOrEmpty(botToken))
-                    throw new InvalidOperationException("Bot token is not provided!");
-
-                if (!_activeBots.TryRemove(botToken, out var bot))
+                if (!_activeBots.TryRemove(botId, out var bot))
                     throw new InvalidOperationException("Bot has not been started yet.");
 
                 await bot.Cts.CancelAsync();
@@ -85,10 +88,13 @@ namespace AutoPost_Bot.BotRepo
                 bot.Client.OnUpdate -= bot.Handler.OnUpdate;
                 bot.Client.OnError -= OnError;
 
-                BotStatusChanged?.Invoke(botToken, false);
-                BotPostOrStatusChanged?.Invoke(this, botToken);
+                var botModel = botData?.GetBot(botId)
+                               ?? throw new InvalidOperationException("Bot has not been started yet.");
+                
+                BotModelUpdateInDb?.Invoke(botModel);
+                BotPostOrStatusChanged?.Invoke(this, botModel);
 
-                Console.WriteLine($"🛑 Bot with token ending {botToken[^6..]} stopped.");
+                Console.WriteLine($"🛑 Bot with token ending {bot.Client.Token} stopped.");
 
                 await Task.CompletedTask;
             }
@@ -99,24 +105,26 @@ namespace AutoPost_Bot.BotRepo
             }
         }
 
-        public bool IsBotActive(string botToken) =>
-            _activeBots.ContainsKey(botToken);
+        public bool IsBotActive(Guid botId) =>
+            _activeBots.ContainsKey(botId);
 
-        public Dictionary<string, TelegramBotClient> GetActiveBots() =>
+        public Dictionary<Guid, TelegramBotClient> GetActiveBots() =>
             _activeBots.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Client);
 
         public List<BotModel> GetBotModels() =>
             botData?.GetAllBots() ?? [];
 
-        public async Task UpdateBotModel(BotModel model)
+        public Task UpdateBotModel(BotModel model)
         {
             try
             {
                 if (botData is null)
                     throw new InvalidOperationException("Bot data service is not available.");
 
-                BotPostOrStatusChanged?.Invoke(this, model.Token);
-                await botData.UpdateBotModel(model);
+                BotPostOrStatusChanged?.Invoke(this, model);
+                BotModelUpdateInDb?.Invoke(model);
+                
+                return Task.CompletedTask;
             }
             catch (Exception ex)
             {
