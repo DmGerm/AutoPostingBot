@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoPost_Bot.Migrations
 {
     [DbContext(typeof(PostsContext))]
-    [Migration("20250511145802_UpdatePostModel")]
-    partial class UpdatePostModel
+    [Migration("20251112190752_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,28 @@ namespace AutoPost_Bot.Migrations
                 .HasAnnotation("Proxies:ChangeTracking", false)
                 .HasAnnotation("Proxies:CheckEquality", false)
                 .HasAnnotation("Proxies:LazyLoading", true);
+
+            modelBuilder.Entity("AutoPost_Bot.Models.BotModel", b =>
+                {
+                    b.Property<Guid>("BotId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("BotId")
+                        .HasName("Bot_Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Bots_Token");
+
+                    b.ToTable("Bots");
+                });
 
             modelBuilder.Entity("AutoPost_Bot.Models.GroupModel", b =>
                 {
@@ -44,12 +66,14 @@ namespace AutoPost_Bot.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("BotID")
-                        .IsRequired()
+                    b.Property<Guid>("BotId")
                         .HasColumnType("TEXT");
 
-                    b.Property<long?>("GroupID")
+                    b.Property<int>("Days")
                         .HasColumnType("INTEGER");
+
+                    b.Property<long>("GroupId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("PostDateTime")
                         .HasColumnType("TEXT");
@@ -69,7 +93,9 @@ namespace AutoPost_Bot.Migrations
                     b.HasKey("Id")
                         .HasName("Post_Id");
 
-                    b.HasIndex("GroupID");
+                    b.HasIndex("BotId");
+
+                    b.HasIndex("GroupId");
 
                     b.HasIndex("Id")
                         .HasDatabaseName("IX_Posts_Id");
@@ -77,14 +103,58 @@ namespace AutoPost_Bot.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("BotModelGroupModel", b =>
+                {
+                    b.Property<Guid>("BotsBotId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("GroupsGroupId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("BotsBotId", "GroupsGroupId");
+
+                    b.HasIndex("GroupsGroupId");
+
+                    b.ToTable("BotGroups", (string)null);
+                });
+
             modelBuilder.Entity("AutoPost_Bot.Models.PostModel", b =>
                 {
+                    b.HasOne("AutoPost_Bot.Models.BotModel", "Bot")
+                        .WithMany("Posts")
+                        .HasForeignKey("BotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("AutoPost_Bot.Models.GroupModel", "Group")
                         .WithMany("Posts")
-                        .HasForeignKey("GroupID")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Bot");
 
                     b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("BotModelGroupModel", b =>
+                {
+                    b.HasOne("AutoPost_Bot.Models.BotModel", null)
+                        .WithMany()
+                        .HasForeignKey("BotsBotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AutoPost_Bot.Models.GroupModel", null)
+                        .WithMany()
+                        .HasForeignKey("GroupsGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("AutoPost_Bot.Models.BotModel", b =>
+                {
+                    b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("AutoPost_Bot.Models.GroupModel", b =>

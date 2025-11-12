@@ -14,8 +14,8 @@ namespace AutoPost_Bot.ScheduleService
         private readonly IBotService _botService;
         private readonly IGroupRepo _groupRepo;
 
-        private Dictionary<string, BotModel> _botModels = [];
-        private Dictionary<string, TelegramBotClient> _activeBots = [];
+        private Dictionary<Guid, BotModel> _botModels = [];
+        private Dictionary<Guid, TelegramBotClient> _activeBots = [];
 
         public PostSchedulerService(
             IServiceScopeFactory scopeFactory,
@@ -38,8 +38,8 @@ namespace AutoPost_Bot.ScheduleService
 
                 _botModels = await db.Bots
                     .Include(b => b.Posts)
-                    .Where(b => activeBotTokens.Contains(b.Token))
-                    .ToDictionaryAsync(b => b.Token, b => b, cancellationToken: stoppingToken);
+                    .Where(b => activeBotTokens.Contains(b.BotId))
+                    .ToDictionaryAsync(b => b.BotId, b => b, cancellationToken: stoppingToken);
             }
 
             _botService.BotPostOrStatusChanged += OnBotDataChanged;
@@ -133,17 +133,17 @@ namespace AutoPost_Bot.ScheduleService
             _ => Days.None
         };
 
-        private void OnBotDataChanged(object? sender, string token)
+        private void OnBotDataChanged(object? sender, BotModel bot)
         {
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<PostsContext>();
 
             var updatedBot = db.Bots
                 .Include(b => b.Posts)
-                .FirstOrDefault(b => b.Token == token);
+                .FirstOrDefault(b => b.BotId == bot.BotId);
 
             if (updatedBot != null)
-                _botModels[token] = updatedBot;
+                _botModels[bot.BotId] = updatedBot;
 
             _activeBots = _botService.GetActiveBots();
         }

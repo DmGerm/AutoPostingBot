@@ -12,7 +12,7 @@ namespace AutoPost_Bot.Data
         {
             modelBuilder.Entity<BotModel>(bot =>
             {
-                
+
                 bot.HasKey(x => x.BotId).HasName("Bot_Id");
 
                 bot.Property(x => x.BotId).HasColumnType("TEXT")
@@ -26,7 +26,7 @@ namespace AutoPost_Bot.Data
 
                 bot.HasMany(b => b.Posts)
                    .WithOne(p => p.Bot)
-                   .HasForeignKey(p => p.BotToken)
+                   .HasForeignKey(p => p.BotId)
                    .OnDelete(DeleteBehavior.Cascade);
             });
 

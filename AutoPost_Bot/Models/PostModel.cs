@@ -10,7 +10,7 @@
         public int RepeatHours { get; set; }
         public int RepeatMinutes { get; set; }
         public virtual BotModel? Bot { get; set; }
-        public string BotToken { get; set; } = string.Empty;
+        public Guid BotId { get; set; }
         public long GroupId { get; set; }
         public virtual GroupModel? Group { get; set; }
     }

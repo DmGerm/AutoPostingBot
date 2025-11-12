@@ -279,7 +279,7 @@
 		{
 			if (bot.IsActive)
 			{
-				await BotService.StopBot(bot.Token);
+				await BotService.StopBot(bot.BotId);
                 ShowStatus("Бот успешно остановлен!");
 				Console.WriteLine("Bot successfully stopped");
             }
@@ -288,7 +288,7 @@
                 if (!ValidateBotToken())
                     return;
 
-                await BotService.StartBot(bot.Token);
+                await BotService.StartBot(bot.BotId, bot.Token);
                 ShowStatus("Бот успешно запущен!");
                 Console.WriteLine("Bot successfully started");
             }

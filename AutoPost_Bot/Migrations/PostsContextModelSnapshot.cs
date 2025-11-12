@@ -23,14 +23,18 @@ namespace AutoPost_Bot.Migrations
 
             modelBuilder.Entity("AutoPost_Bot.Models.BotModel", b =>
                 {
-                    b.Property<string>("Token")
+                    b.Property<Guid>("BotId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Token")
-                        .HasName("Bot_token");
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("BotId")
+                        .HasName("Bot_Id");
 
                     b.HasIndex("Token")
                         .IsUnique()
@@ -59,8 +63,7 @@ namespace AutoPost_Bot.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("BotToken")
-                        .IsRequired()
+                    b.Property<Guid>("BotId")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Days")
@@ -87,7 +90,7 @@ namespace AutoPost_Bot.Migrations
                     b.HasKey("Id")
                         .HasName("Post_Id");
 
-                    b.HasIndex("BotToken");
+                    b.HasIndex("BotId");
 
                     b.HasIndex("GroupId");
 
@@ -99,13 +102,13 @@ namespace AutoPost_Bot.Migrations
 
             modelBuilder.Entity("BotModelGroupModel", b =>
                 {
-                    b.Property<string>("BotsToken")
+                    b.Property<Guid>("BotsBotId")
                         .HasColumnType("TEXT");
 
                     b.Property<long>("GroupsGroupId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("BotsToken", "GroupsGroupId");
+                    b.HasKey("BotsBotId", "GroupsGroupId");
 
                     b.HasIndex("GroupsGroupId");
 
@@ -116,7 +119,7 @@ namespace AutoPost_Bot.Migrations
                 {
                     b.HasOne("AutoPost_Bot.Models.BotModel", "Bot")
                         .WithMany("Posts")
-                        .HasForeignKey("BotToken")
+                        .HasForeignKey("BotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -135,7 +138,7 @@ namespace AutoPost_Bot.Migrations
                 {
                     b.HasOne("AutoPost_Bot.Models.BotModel", null)
                         .WithMany()
-                        .HasForeignKey("BotsToken")
+                        .HasForeignKey("BotsBotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
