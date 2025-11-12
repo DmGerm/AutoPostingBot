@@ -11,9 +11,9 @@ namespace AutoPost_Bot.BotRepo
     public class BotService(IGroupRepo groupRepo, PostsContext postsContext, IBotData? botData)
         : IBotService
     {
-        private readonly PostsContext _postContext = postsContext 
+        private readonly PostsContext _postContext = postsContext
                                                      ?? throw new InvalidOperationException("Database context is not available.");
-        private readonly IGroupRepo _groupRepo = groupRepo 
+        private readonly IGroupRepo _groupRepo = groupRepo
                                                  ?? throw new InvalidOperationException("Group repository is not available.");
 
         private readonly ConcurrentDictionary<Guid, (TelegramBotClient Client, CancellationTokenSource Cts, UpdateHandler Handler)> _activeBots = new();
@@ -52,15 +52,16 @@ namespace AutoPost_Bot.BotRepo
                     throw new InvalidOperationException("Failed to register bot in active list.");
 
                 client.OnUpdate += handler.OnUpdate;
-                client.OnError += OnError;  
+                client.OnError += OnError;
 
                 BotModel bot = botData?.GetBot(botId)
                     ?? new()
-                {
-                    BotId = Guid.NewGuid(),
-                    Token = botToken,
-                    IsActive = true
-                };
+                    {
+                        BotId = Guid.NewGuid(),
+                        Token = botToken,
+                    };
+
+                bot.IsActive = true;
 
                 BotModelUpdateInDb?.Invoke(bot);
                 BotPostOrStatusChanged?.Invoke(this, bot);
@@ -90,7 +91,7 @@ namespace AutoPost_Bot.BotRepo
 
                 var botModel = botData?.GetBot(botId)
                                ?? throw new InvalidOperationException("Bot has not been started yet.");
-                
+
                 BotModelUpdateInDb?.Invoke(botModel);
                 BotPostOrStatusChanged?.Invoke(this, botModel);
 
@@ -123,7 +124,7 @@ namespace AutoPost_Bot.BotRepo
 
                 BotPostOrStatusChanged?.Invoke(this, model);
                 BotModelUpdateInDb?.Invoke(model);
-                
+
                 return Task.CompletedTask;
             }
             catch (Exception ex)

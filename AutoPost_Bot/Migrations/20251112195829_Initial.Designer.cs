@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AutoPost_Bot.Migrations
 {
     [DbContext(typeof(PostsContext))]
-    [Migration("20251112190752_Initial")]
+    [Migration("20251112195829_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

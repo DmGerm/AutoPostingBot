@@ -10,22 +10,6 @@ namespace AutoPost_Bot.BotRepo
         public BotData(PostsContext postsContext)
         {
             _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
-
-            if (_postContext.Bots == null)
-            {
-                throw new InvalidOperationException("Bots DbSet is not initialized.");
-            }
-
-            if (!_postContext.Bots.Any())
-            {
-                _postContext.Bots.Add(new Models.BotModel
-                {
-                    BotId = Guid.NewGuid(),
-                    Token = string.Empty,
-                    IsActive = false
-                });
-                _postContext.SaveChanges();
-            }
         }
 
         public List<string> GetAllBotTokensFromDb() => _postContext.Bots.Select(b => b.Token).ToList();

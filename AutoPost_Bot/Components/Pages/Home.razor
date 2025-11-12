@@ -245,7 +245,7 @@
                     IsActive = false,
                     Groups = new List<GroupModel>()
 				};
-              
+
 			}
 
 			_allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
@@ -280,19 +280,19 @@
 			if (bot.IsActive)
 			{
 				await BotService.StopBot(bot.BotId);
-                ShowStatus("Бот успешно остановлен!");
+				ShowStatus("Бот успешно остановлен!");
 				Console.WriteLine("Bot successfully stopped");
-            }
-            else
-            {
-                if (!ValidateBotToken())
-                    return;
+			}
+			else
+			{
+				if (!ValidateBotToken())
+					return;
 
-                await BotService.StartBot(bot.BotId, bot.Token);
-                ShowStatus("Бот успешно запущен!");
-                Console.WriteLine("Bot successfully started");
-            }
-        }
+				await BotService.StartBot(bot.BotId, bot.Token);
+				ShowStatus("Бот успешно запущен!");
+				Console.WriteLine("Bot successfully started");
+			}
+		}
         catch (Exception ex)
         {
             HandleError(ex.Message);

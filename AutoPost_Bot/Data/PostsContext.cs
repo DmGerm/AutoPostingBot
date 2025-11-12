@@ -15,7 +15,7 @@ namespace AutoPost_Bot.Data
 
                 bot.HasKey(x => x.BotId).HasName("Bot_Id");
 
-                bot.Property(x => x.BotId).HasColumnType("TEXT")
+                bot.Property(x => x.BotId)
                                       .ValueGeneratedNever();
 
                 bot.HasIndex(x => x.Token).IsUnique().HasDatabaseName("IX_Bots_Token");
