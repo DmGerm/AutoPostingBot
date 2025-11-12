@@ -20,6 +20,7 @@ namespace AutoPost_Bot.BotRepo
             {
                 _postContext.Bots.Add(new Models.BotModel
                 {
+                    BotId = Guid.NewGuid(),
                     Token = string.Empty,
                     IsActive = false
                 });
