@@ -144,5 +144,8 @@ namespace AutoPost_Bot.BotRepo
                 Console.WriteLine(exception.StackTrace);
             });
         }
+
+        public BotModel CreateNewBot() => botData?.CreateNewBot()
+                                    ?? throw new InvalidOperationException("Bot data service is not available.");
     }
 }

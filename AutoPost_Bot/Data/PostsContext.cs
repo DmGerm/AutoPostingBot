@@ -18,7 +18,7 @@ namespace AutoPost_Bot.Data
                 bot.Property(x => x.BotId)
                                       .ValueGeneratedNever();
 
-                bot.HasIndex(x => x.Token).IsUnique().HasDatabaseName("IX_Bots_Token");
+                bot.HasIndex(x => x.Token).HasDatabaseName("IX_Bots_Token");
 
                 bot.HasMany(x => x.Groups)
                     .WithMany(x => x.Bots)

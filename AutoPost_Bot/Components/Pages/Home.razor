@@ -17,15 +17,24 @@
 <ul class="nav nav-pills mt-2 mb-2 gap-2 p-2 d-inline-flex bg-light rounded rounded-2">
     @foreach (var bot in _allBots)
     {
-        <li class="nav-item">
-            <a class="nav-link @(bot.Key == _selectedBotIndex ? "active" : "")"
+        <li class="nav-item position-relative">
+            <a class="nav-link pe-4 @(bot.Key == _selectedBotIndex ? "active" : "")"
                href="#">
                 Бот @(bot.Key + 1)
             </a>
+
+            <button type="button"
+                    class="btn-close position-absolute top-0 end-0 mt-1 me-1"
+                    style="z-index: 10;"
+                    aria-label="Close">
+
+                </button>
         </li>
     }
     <li class="nav-item">
-        <a class="nav-link text-primary-emphasis" href="#">
+        <a class="nav-link text-primary-emphasis" 
+        href="#"
+        @onclick="AddBot">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
                 <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
                 <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
@@ -237,82 +246,70 @@
         }
 
 @code {
-	private Action? _groupRepoChangedHandler;
-	private Dictionary<int, BotModel> _allBots = new();
-	private bool _hasError;
-	private bool _hasStatus;
-	private string _errorMessage = string.Empty;
-	private string _statusMessage = string.Empty;
-	private bool _isDisposed;
-	private int _buttonCount = 1;
-	private readonly int _selectedBotIndex = 0;
+    private Action? _groupRepoChangedHandler;
+    private Dictionary<int, BotModel> _allBots = new();
+    private bool _hasError;
+    private bool _hasStatus;
+    private string _errorMessage = string.Empty;
+    private string _statusMessage = string.Empty;
+    private bool _isDisposed;
+    private int _buttonCount = 1;
+    private readonly int _selectedBotIndex = 0;
 
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			_buttonCount = 1;
-			_allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
-													.ToDictionary(x => x.Item1, x => x.Item2)
-													?? throw new Exception(@"Exception in Home, can't load boats.");
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _buttonCount = 1;
+            _allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
+                                                    .ToDictionary(x => x.Item1, x => x.Item2)
+                                                    ?? throw new Exception(@"Exception in Home, can't load boats.");
 
-			if (_allBots.Count == 0)
-			{
-				_allBots[0] = new BotModel
-                {   
-                    BotId = Guid.NewGuid(),
-                    Token = string.Empty,
-                    IsActive = false,
-                    Groups = new List<GroupModel>()
-				};
+            _allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
 
-			}
+            _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
+            GroupRepo.StateChanged += _groupRepoChangedHandler;
+        }
+        catch (Exception ex)
+        {
+            HandleError("Ошибка инициализации: " + ex.Message);
+        }
+    }
 
-			_allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
+    private string GetGroupName(GroupModel? group)
+    {
+        if (group == null)
+            return "Выберите канал или группу";
 
-			_groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
-			GroupRepo.StateChanged += _groupRepoChangedHandler;
-		}
-		catch (Exception ex)
-		{
-			HandleError("Ошибка инициализации: " + ex.Message);
-		}
-	}
+        return String.IsNullOrEmpty(group.Name)
+            ? group.Name
+            : "Группа не найдена";
+    }
 
-	private string GetGroupName(GroupModel? group)
-	{
-		if (group == null)
-			return "Выберите канал или группу";
+    private async Task ToggleBot(BotModel bot)
+    {
+        _hasError = false;
+        _hasStatus = false;
+        Console.WriteLine(bot.IsActive);
 
-		return String.IsNullOrEmpty(group.Name)
-			? group.Name
-			: "Группа не найдена";
-	}
+        try
+        {
+            if (bot.IsActive)
+            {
+                await BotService.StopBot(bot.BotId);
+                ShowStatus("Бот успешно остановлен!");
+                Console.WriteLine("Bot successfully stopped");
+            }
+            else
+            {
+                if (!ValidateBotToken())
+                    return;
 
-	private async Task ToggleBot(BotModel bot)
-	{
-		_hasError = false;
-		_hasStatus = false;
-		Console.WriteLine(bot.IsActive);
-
-		try
-		{
-			if (bot.IsActive)
-			{
-				await BotService.StopBot(bot.BotId);
-				ShowStatus("Бот успешно остановлен!");
-				Console.WriteLine("Bot successfully stopped");
-			}
-			else
-			{
-				if (!ValidateBotToken())
-					return;
-
-				await BotService.StartBot(bot.BotId, bot.Token);
-				ShowStatus("Бот успешно запущен!");
-				Console.WriteLine("Bot successfully started");
-			}
-		}
+                await BotService.StartBot(bot.BotId, bot.Token);
+                ShowStatus("Бот успешно запущен!");
+                Console.WriteLine("Bot successfully started");
+            }
+        }
         catch (Exception ex)
         {
             HandleError(ex.Message);
@@ -332,7 +329,7 @@
     private void SelectGroup(PostModel post, GroupModel group)
     {
         post.Group = group;
-		post.GroupId = group.GroupId;
+        post.GroupId = group.GroupId;
         StateHasChanged();
     }
 
@@ -444,4 +441,9 @@
         StateHasChanged();
         return Task.CompletedTask;
     }
+    private void AddBot(MouseEventArgs args)
+    {
+        _allBots.Add(_allBots.Count,BotService.CreateNewBot());
+		StateHasChanged();
+	}
 }

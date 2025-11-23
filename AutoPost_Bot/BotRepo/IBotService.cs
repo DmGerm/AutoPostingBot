@@ -14,5 +14,6 @@ namespace AutoPost_Bot.BotRepo
         public List<BotModel> GetBotModels();
         public Task UpdateBotModel(BotModel model);
         public Dictionary<Guid, TelegramBotClient> GetActiveBots();
+        public BotModel CreateNewBot();
     }
 }
