@@ -145,10 +145,11 @@ namespace AutoPost_Bot.BotRepo
         public BotModel CreateNewBot() => botData?.CreateNewBot()
                                     ?? throw new InvalidOperationException("Bot data service is not available.");
 
-        public Guid RemoveBot(Guid BotId)
+        public async Task<Guid> RemoveBot(Guid BotId)
         {
             try
             {
+                await StopBot(BotId);
                 return botData?.RemoveBot(BotId)
                                         ?? throw new InvalidOperationException("Bot data service is not available.");
             }

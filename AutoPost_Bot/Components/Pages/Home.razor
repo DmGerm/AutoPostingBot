@@ -448,20 +448,18 @@
 		StateHasChanged();
 	}
 
-    private Task BotDel(int botIndex)
+    private async Task BotDel(int botId)
     {
         try
         {
             if (_allBots.Count <= 1)
             {
                 HandleError("Нельзя удалить последний бот!");
-                return Task.CompletedTask;
+                return;
 			}
 
-            //Нужно остановить бота перед удалением
-			//Нужно отсортировать боты по индексу, чтобы не было проблем с удалением
-            BotService.RemoveBot(_allBots[botIndex].BotId);
-            _allBots.Remove(botIndex);
+            await BotService.RemoveBot(_allBots[botId].BotId);
+            _allBots.Remove(botId);
             _allBots = _allBots.Values.Select((botmodel, index) => (index, botmodel))
 												 .ToDictionary(x => x.Item1, x => x.Item2);
             StateHasChanged();
@@ -470,6 +468,5 @@
         {
             Console.WriteLine($"Ошибка при удалении бота {e.Message}");
         }
-        return Task.CompletedTask;
-	}
+    }
     }
