@@ -1,5 +1,4 @@
-﻿using AutoPost_Bot.Data;
-using AutoPost_Bot.Handlers;
+﻿using AutoPost_Bot.Handlers;
 using AutoPost_Bot.Models;
 using AutoPost_Bot.TelegramGroupsRepo;
 using System.Collections.Concurrent;
@@ -8,11 +7,9 @@ using Telegram.Bot.Polling;
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class BotService(IGroupRepo groupRepo, PostsContext postsContext, IBotData? botData)
+    public class BotService(IGroupRepo groupRepo, IBotData? botData)
         : IBotService
     {
-        private readonly PostsContext _postContext = postsContext
-                                                     ?? throw new InvalidOperationException("Database context is not available.");
         private readonly IGroupRepo _groupRepo = groupRepo
                                                  ?? throw new InvalidOperationException("Group repository is not available.");
 
@@ -147,5 +144,22 @@ namespace AutoPost_Bot.BotRepo
 
         public BotModel CreateNewBot() => botData?.CreateNewBot()
                                     ?? throw new InvalidOperationException("Bot data service is not available.");
+
+        public Guid RemoveBot(Guid BotId)
+        {
+            try
+            {
+                return botData?.RemoveBot(BotId)
+                                        ?? throw new InvalidOperationException("Bot data service is not available.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"❌ Exception in RemoveBot: {ex.Message}"
+                );
+                Console.WriteLine(ex.StackTrace);
+                throw;
+            }
+        }
     }
 }

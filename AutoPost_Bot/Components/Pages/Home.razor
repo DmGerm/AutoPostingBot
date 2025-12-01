@@ -26,8 +26,8 @@
             <button type="button"
                     class="btn-close position-absolute top-0 end-0 mt-1 me-1"
                     style="z-index: 10;"
-                    aria-label="Close">
-
+                    aria-label="Close"
+                    @onclick="() => BotDel(bot.Key)">
                 </button>
         </li>
     }
@@ -441,9 +441,25 @@
         StateHasChanged();
         return Task.CompletedTask;
     }
+
     private void AddBot(MouseEventArgs args)
     {
         _allBots.Add(_allBots.Count,BotService.CreateNewBot());
 		StateHasChanged();
 	}
-}
+
+    private Task BotDel(int botIndex)
+    {
+        try
+        {
+            BotService.RemoveBot(_allBots[botIndex].BotId);
+            _allBots.Remove(botIndex);
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ошибка при удалении бота {e.Message}");
+        }
+        return Task.CompletedTask;
+	}
+    }

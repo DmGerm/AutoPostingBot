@@ -4,27 +4,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AutoPost_Bot.BotRepo
 {
-    public class BotData : IBotData
+    public class BotData(PostsContext postsContext) : IBotData
     {
-        private readonly PostsContext _postContext;
-        public BotData(PostsContext postsContext)
-        {
-            _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
-        }
+        private readonly PostsContext _postContext = postsContext ?? throw new ArgumentNullException(nameof(postsContext));
 
         public List<string> GetAllBotTokensFromDb() => _postContext.Bots.Select(b => b.Token).ToList();
 
-        public List<BotModel>? GetAllBots()
+        public List<BotModel> GetAllBots()
         {
             return _postContext.Bots
-           .Include(bot => bot.Groups)
-           .ToList() ?? [new BotModel() {
-                BotId = Guid.Empty,
-                Token = string.Empty,
-                IsActive = false,
-                Groups = [],
-                Posts = []
-            }];
+                .Include(bot => bot.Groups)
+                .ToList()
+                .DefaultIfEmpty(new BotModel
+                {
+                    BotId = Guid.Empty,
+                    Token = string.Empty,
+                    IsActive = false,
+                    Groups = [],
+                    Posts = []
+                })
+                .ToList();
         }
 
         public BotModel? GetBot(Guid botId) =>
@@ -50,6 +49,21 @@ namespace AutoPost_Bot.BotRepo
             catch (Exception ex)
             {
                 throw new Exception("Error creating new bot", ex);
+            }
+        }
+
+        public Guid RemoveBot(Guid botId)
+        {
+            try
+            {
+                _postContext.Bots.RemoveRange(_postContext.Bots.Where(b => b.BotId == botId));
+                _postContext.SaveChanges();
+                return botId;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(
+                    $"Error removing bot with ID {botId}", ex);
             }
         }
     }

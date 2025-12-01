@@ -7,6 +7,7 @@ namespace AutoPost_Bot.BotRepo
         List<BotModel>? GetAllBots();
         BotModel? GetBot(Guid botId);
         BotModel CreateNewBot();
+        Guid RemoveBot(Guid botId);
     }
 }
 
