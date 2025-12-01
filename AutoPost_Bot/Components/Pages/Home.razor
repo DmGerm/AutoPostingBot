@@ -246,96 +246,96 @@
         }
 
 @code {
-    private Action? _groupRepoChangedHandler;
-    private Dictionary<int, BotModel> _allBots = new();
-    private bool _hasError;
-    private bool _hasStatus;
-    private string _errorMessage = string.Empty;
-    private string _statusMessage = string.Empty;
-    private bool _isDisposed;
-    private int _buttonCount = 1;
-    private readonly int _selectedBotIndex = 0;
+	private Action? _groupRepoChangedHandler;
+	private Dictionary<int, BotModel> _allBots = new();
+	private bool _hasError;
+	private bool _hasStatus;
+	private string _errorMessage = string.Empty;
+	private string _statusMessage = string.Empty;
+	private bool _isDisposed;
+	private int _buttonCount = 1;
+	private readonly int _selectedBotIndex = 0;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _buttonCount = 1;
-            _allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
-                                                    .ToDictionary(x => x.Item1, x => x.Item2)
-                                                    ?? throw new Exception(@"Exception in Home, can't load boats.");
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			_buttonCount = 1;
+			_allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
+													.ToDictionary(x => x.Item1, x => x.Item2)
+													?? throw new Exception(@"Exception in Home, can't load boats.");
 
-            _allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
+			_allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
 
-            _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
-            GroupRepo.StateChanged += _groupRepoChangedHandler;
-        }
-        catch (Exception ex)
-        {
-            HandleError("Ошибка инициализации: " + ex.Message);
-        }
-    }
+			_groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
+			GroupRepo.StateChanged += _groupRepoChangedHandler;
+		}
+		catch (Exception ex)
+		{
+			HandleError("Ошибка инициализации: " + ex.Message);
+		}
+	}
 
-    private string GetGroupName(GroupModel? group)
-    {
-        if (group == null)
-            return "Выберите канал или группу";
+	private string GetGroupName(GroupModel? group)
+	{
+		if (group == null)
+			return "Выберите канал или группу";
 
-        return String.IsNullOrEmpty(group.Name)
-            ? group.Name
-            : "Группа не найдена";
-    }
+		return String.IsNullOrEmpty(group.Name)
+			? group.Name
+			: "Группа не найдена";
+	}
 
-    private async Task ToggleBot(BotModel bot)
-    {
-        _hasError = false;
-        _hasStatus = false;
-        Console.WriteLine(bot.IsActive);
+	private async Task ToggleBot(BotModel bot)
+	{
+		_hasError = false;
+		_hasStatus = false;
+		Console.WriteLine(bot.IsActive);
 
-        try
-        {
-            if (bot.IsActive)
-            {
-                await BotService.StopBot(bot.BotId);
-                ShowStatus("Бот успешно остановлен!");
-                Console.WriteLine("Bot successfully stopped");
-            }
-            else
-            {
-                if (!ValidateBotToken())
-                    return;
+		try
+		{
+			if (bot.IsActive)
+			{
+				await BotService.StopBot(bot.BotId);
+				ShowStatus("Бот успешно остановлен!");
+				Console.WriteLine("Bot successfully stopped");
+			}
+			else
+			{
+				if (!ValidateBotToken())
+					return;
 
-                await BotService.StartBot(bot.BotId, bot.Token);
-                ShowStatus("Бот успешно запущен!");
-                Console.WriteLine("Bot successfully started");
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex.Message);
-        }
-    }
+				await BotService.StartBot(bot.BotId, bot.Token);
+				ShowStatus("Бот успешно запущен!");
+				Console.WriteLine("Bot successfully started");
+			}
+		}
+		catch (Exception ex)
+		{
+			HandleError(ex.Message);
+		}
+	}
 
-    private bool ValidateBotToken()
-    {
-        const string pattern = @"^(?:\w+):(?:[\w:]+)";
-        if (Regex.IsMatch(_allBots[_selectedBotIndex].Token, pattern))
-            return true;
+	private bool ValidateBotToken()
+	{
+		const string pattern = @"^(?:\w+):(?:[\w:]+)";
+		if (Regex.IsMatch(_allBots[_selectedBotIndex].Token, pattern))
+			return true;
 
-        HandleError("Неверный формат токена");
-        return false;
-    }
+		HandleError("Неверный формат токена");
+		return false;
+	}
 
-    private void SelectGroup(PostModel post, GroupModel group)
-    {
-        post.Group = group;
-        post.GroupId = group.GroupId;
-        StateHasChanged();
-    }
+	private void SelectGroup(PostModel post, GroupModel group)
+	{
+		post.Group = group;
+		post.GroupId = group.GroupId;
+		StateHasChanged();
+	}
 
-    private void AddPost()
-    {
-        _allBots[_selectedBotIndex].Posts?.Add(new PostModel
+	private void AddPost()
+	{
+		_allBots[_selectedBotIndex].Posts?.Add(new PostModel
         {
             Id = Guid.NewGuid(),
             PostText = string.Empty,
@@ -345,106 +345,106 @@
             RepeatMinutes = 0
         });
 
-        StateHasChanged();
-    }
+		StateHasChanged();
+	}
 
-    private async Task SaveChanges(bool isNotificationOn)
-    {
-        try
-        {
-            await BotService.UpdateBotModel(_allBots[_selectedBotIndex]);
+	private async Task SaveChanges(bool isNotificationOn)
+	{
+		try
+		{
+			await BotService.UpdateBotModel(_allBots[_selectedBotIndex]);
 
-            if (isNotificationOn)
-                ShowStatus("Изменения успешно сохранены!");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка при сохранении постов: {ex.Message} {ex.InnerException.StackTrace}");
-            HandleError("Ошибка сохранения: " + ex.Message);
-        }
-    }
+			if (isNotificationOn)
+				ShowStatus("Изменения успешно сохранены!");
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Ошибка при сохранении постов: {ex.Message} {ex.InnerException.StackTrace}");
+			HandleError("Ошибка сохранения: " + ex.Message);
+		}
+	}
 
-    private void HandleError(string message)
-    {
-        _hasError = true;
-        _errorMessage = message;
-        _hasStatus = false;
-        StateHasChanged();
-    }
+	private void HandleError(string message)
+	{
+		_hasError = true;
+		_errorMessage = message;
+		_hasStatus = false;
+		StateHasChanged();
+	}
 
-    private void ShowStatus(string message)
-    {
-        _hasStatus = true;
-        _statusMessage = message;
-        _hasError = false;
-        StateHasChanged();
-    }
+	private void ShowStatus(string message)
+	{
+		_hasStatus = true;
+		_statusMessage = message;
+		_hasError = false;
+		StateHasChanged();
+	}
 
-    private async Task OnGroupRepoChanged()
-    {
-        try
-        {
-            await InvokeAsync(() =>
-            {
-                StateHasChanged();
-                return Task.CompletedTask;
-            });
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Ошибка в обработчике GroupRepo: {e.Message}");
-        }
-    }
+	private async Task OnGroupRepoChanged()
+	{
+		try
+		{
+			await InvokeAsync(() =>
+			{
+				StateHasChanged();
+				return Task.CompletedTask;
+			});
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine($"Ошибка в обработчике GroupRepo: {e.Message}");
+		}
+	}
 
-    public void Dispose()
-    {
-        if (!_isDisposed && _groupRepoChangedHandler is not null)
-        {
-            GroupRepo.StateChanged -= _groupRepoChangedHandler;
-            _isDisposed = true;
-        }
-    }
+	public void Dispose()
+	{
+		if (!_isDisposed && _groupRepoChangedHandler is not null)
+		{
+			GroupRepo.StateChanged -= _groupRepoChangedHandler;
+			_isDisposed = true;
+		}
+	}
 
-    private Task RemovePost(PostModel post)
-    {
-        try
-        {
-            _allBots[_selectedBotIndex].Posts.Remove(post);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine($"Ошибка при удалении поста {e.Message}");
-        }
+	private Task RemovePost(PostModel post)
+	{
+		try
+		{
+			_allBots[_selectedBotIndex].Posts.Remove(post);
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine($"Ошибка при удалении поста {e.Message}");
+		}
 
-        return Task.CompletedTask;
-    }
+		return Task.CompletedTask;
+	}
 
-    private bool IsDayChecked(PostModel post, Days day)
-    {
-        if (post.Days.HasFlag(day))
-        {
-            return true;
-        }
-        return false;
-    }
+	private bool IsDayChecked(PostModel post, Days day)
+	{
+		if (post.Days.HasFlag(day))
+		{
+			return true;
+		}
+		return false;
+	}
 
-    private Task DayAddOrRemove(PostModel post, Days day)
-    {
-        if (post.Days.HasFlag(day))
-        {
-            post.Days &= ~day;
-        }
-        else
-        {
-            post.Days |= day;
-        }
-        StateHasChanged();
-        return Task.CompletedTask;
-    }
+	private Task DayAddOrRemove(PostModel post, Days day)
+	{
+		if (post.Days.HasFlag(day))
+		{
+			post.Days &= ~day;
+		}
+		else
+		{
+			post.Days |= day;
+		}
+		StateHasChanged();
+		return Task.CompletedTask;
+	}
 
-    private void AddBot(MouseEventArgs args)
-    {
-        _allBots.Add(_allBots.Count,BotService.CreateNewBot());
+	private void AddBot(MouseEventArgs args)
+	{
+		_allBots.Add(_allBots.Count,BotService.CreateNewBot());
 		StateHasChanged();
 	}
 
@@ -458,8 +458,12 @@
                 return Task.CompletedTask;
 			}
 
+            //Нужно остановить бота перед удалением
+			//Нужно отсортировать боты по индексу, чтобы не было проблем с удалением
             BotService.RemoveBot(_allBots[botIndex].BotId);
             _allBots.Remove(botIndex);
+            _allBots = _allBots.Values.Select((botmodel, index) => (index, botmodel))
+												 .ToDictionary(x => x.Item1, x => x.Item2);
             StateHasChanged();
         }
         catch (Exception e)
