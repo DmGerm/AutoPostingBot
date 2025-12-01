@@ -452,6 +452,12 @@
     {
         try
         {
+            if (_allBots.Count <= 1)
+            {
+                HandleError("Нельзя удалить последний бот!");
+                return Task.CompletedTask;
+			}
+
             BotService.RemoveBot(_allBots[botIndex].BotId);
             _allBots.Remove(botIndex);
             StateHasChanged();
