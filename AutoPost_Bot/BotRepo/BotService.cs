@@ -149,7 +149,8 @@ namespace AutoPost_Bot.BotRepo
         {
             try
             {
-                await StopBot(BotId);
+                if (IsBotActive(BotId))
+                    await StopBot(BotId);
                 return botData?.RemoveBot(BotId)
                                         ?? throw new InvalidOperationException("Bot data service is not available.");
             }
