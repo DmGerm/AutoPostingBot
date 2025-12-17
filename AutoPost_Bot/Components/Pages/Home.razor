@@ -12,34 +12,49 @@
 @implements IDisposable
 @attribute [Authorize]
 
+@* ToDo: 1. Название ботов, 2. Подтверждение при удалении бота, 3. Выделить в отдельную ветку много пользователей одни боты и индивидуальный пользователей, управляет пользователями админ, 4. Для версии с множеством пользователей добавить google регистрацию, восстановление пароля, email подтверждение, 5. Добавить ограничение на количество ботов в бесплатной версии, 6. Добавить платёжную систему, 7. Добавить поддержку файлов в посты, 8. Добавить поддержку отложенных сторис, 9. Добавить поддержку других соц. сетей (VK, OK, FB и т.д.), 10. Добавить текстовый редактор для постов (жирный, курсив, ссылки и т.д.), 11. Добавить превью поста перед публикацией, 12. Добавить возможность планирования повторяющихся постов с определённым интервалом (каждый день, каждую неделю и т.д.), 13. Добавить возможность импорта/экспорта настроек ботов и постов в формате JSON или CSV, 14. Добавить аналитику по опубликованным постам (количество просмотров, лайков, комментариев и т.д.), 15. Улучшить UI/UX дизайн приложения для более удобного использования. *@
+
 <PageTitle>Home</PageTitle>
 
-<ul class="nav nav-pills mt-2 mb-2 gap-2 p-2 d-inline-flex bg-light rounded rounded-2">
+<ul class="nav nav-pills mt-2 mb-2 gap-2 p-2 d-inline-flex align-items-center bg-light rounded rounded-2">
     @foreach (var bot in _allBots)
     {
         <li class="nav-item position-relative">
-            <a class="nav-link pe-4 @(bot.Key == _selectedBotIndex ? "active" : "")"
-               href="#"
-			   @onclick="() => _selectedBotIndex = bot.Key">
-                Бот @(bot.Key + 1)
-            </a>
+
+            @if (_editingBotIndex == bot.Key)
+            {
+                <input class="form-control form-control-sm pe-4"
+					   style="width: 6rem;"
+                       @bind="_editingBotName"
+                       @bind:event="oninput"
+                       @onblur="() => CommitBotRename(bot.Key)"
+                       @onkeydown="(e) => OnRenameKeyDown(e, bot.Key)" />
+            }
+            else
+            {
+                <a class="nav-link pe-4 @(bot.Key == _selectedBotIndex ? "active" : "")"
+                   href="#"
+                   @onclick="() => _selectedBotIndex = bot.Key"
+                   @ondblclick="() => StartRename(bot.Key, bot.Value.BotName)">
+                   @(bot.Value.BotName ?? $"Бот: {bot.Key + 1}")
+                </a>
+            }
 
             <button type="button"
                     class="btn-close position-absolute top-0 end-0 mt-1 me-1"
                     style="z-index: 10;"
                     aria-label="Close"
                     @onclick="() => BotDel(bot.Key)">
-                </button>
+            </button>
+
         </li>
     }
+
     <li class="nav-item">
-        <a class="nav-link text-primary-emphasis" 
-        href="#"
-        @onclick="AddBot">
-            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16">
-                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
-            </svg>
+        <a class="nav-link text-primary-emphasis"
+           href="#"
+           @onclick="AddBot">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1.5em" height="1.5em" fill="currentColor" class="bi bi-plus-square" viewBox="0 0 16 16"> <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" /> <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" /> </svg>
         </a>
     </li>
 </ul>
@@ -247,15 +262,17 @@
         }
 
 @code {
-	private Action? _groupRepoChangedHandler;
-	private Dictionary<int, BotModel> _allBots = new();
-	private bool _hasError;
-	private bool _hasStatus;
-	private string _errorMessage = string.Empty;
-	private string _statusMessage = string.Empty;
-	private bool _isDisposed;
-	private int _buttonCount = 1;
+    private Action? _groupRepoChangedHandler;
+    private Dictionary<int, BotModel> _allBots = new();
+    private bool _hasError;
+    private bool _hasStatus;
+    private string _errorMessage = string.Empty;
+    private string _statusMessage = string.Empty;
+    private bool _isDisposed;
+    private int _buttonCount = 1;
     private int _selectedBotIndex { get; set; }
+    private int? _editingBotIndex;
+	private string _editingBotName = string.Empty;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -476,4 +493,32 @@
             Console.WriteLine($"Ошибка при удалении бота {e.Message}");
         }
     }
+
+    private void StartRename(int botKey, string currentName)
+{
+    _editingBotIndex = botKey;
+    _editingBotName = currentName;
+}
+
+private void CommitBotRename(int botKey)
+{
+    if (_editingBotIndex != botKey)
+        return;
+
+    if (!string.IsNullOrWhiteSpace(_editingBotName))
+    {
+        _allBots[botKey].BotName = _editingBotName.Trim();
+    }
+
+    _editingBotIndex = null;
+}
+
+private void OnRenameKeyDown(KeyboardEventArgs e, int botKey)
+{
+    if (e.Key == "Enter")
+        CommitBotRename(botKey);
+
+    if (e.Key == "Escape")
+        _editingBotIndex = null;
+}
     }
