@@ -12,7 +12,7 @@
 @implements IDisposable
 @attribute [Authorize]
 
-@* ToDo: 1. Название ботов, 2. Подтверждение при удалении бота, 3. Выделить в отдельную ветку много пользователей одни боты и индивидуальный пользователей, управляет пользователями админ, 4. Для версии с множеством пользователей добавить google регистрацию, восстановление пароля, email подтверждение, 5. Добавить ограничение на количество ботов в бесплатной версии, 6. Добавить платёжную систему, 7. Добавить поддержку файлов в посты, 8. Добавить поддержку отложенных сторис, 9. Добавить поддержку других соц. сетей (VK, OK, FB и т.д.), 10. Добавить текстовый редактор для постов (жирный, курсив, ссылки и т.д.), 11. Добавить превью поста перед публикацией, 12. Добавить возможность планирования повторяющихся постов с определённым интервалом (каждый день, каждую неделю и т.д.), 13. Добавить возможность импорта/экспорта настроек ботов и постов в формате JSON или CSV, 14. Добавить аналитику по опубликованным постам (количество просмотров, лайков, комментариев и т.д.), 15. Улучшить UI/UX дизайн приложения для более удобного использования. *@
+@* ToDo: 3. Выделить в отдельную ветку много пользователей одни боты и индивидуальный пользователей, управляет пользователями админ, 4. Для версии с множеством пользователей добавить google регистрацию, восстановление пароля, email подтверждение, 5. Добавить ограничение на количество ботов в бесплатной версии, 6. Добавить платёжную систему, 7. Добавить поддержку файлов в посты, 8. Добавить поддержку отложенных сторис, 9. Добавить поддержку других соц. сетей (VK, OK, FB и т.д.), 10. Добавить текстовый редактор для постов (жирный, курсив, ссылки и т.д.), 11. Добавить превью поста перед публикацией, 12. Добавить возможность планирования повторяющихся постов с определённым интервалом (каждый день, каждую неделю и т.д.), 13. Добавить возможность импорта/экспорта настроек ботов и постов в формате JSON или CSV, 14. Добавить аналитику по опубликованным постам (количество просмотров, лайков, комментариев и т.д.), 15. Улучшить UI/UX дизайн приложения для более удобного использования. *@
 
 <PageTitle>Home</PageTitle>
 
@@ -24,7 +24,7 @@
             @if (_editingBotIndex == bot.Key)
             {
                 <input class="form-control form-control-sm pe-4"
-					   style="width: 6rem;"
+                       style="width: 6rem;"
                        @bind="_editingBotName"
                        @bind:event="oninput"
                        @onblur="() => CommitBotRename(bot.Key)"
@@ -36,7 +36,7 @@
                    href="#"
                    @onclick="() => _selectedBotIndex = bot.Key"
                    @ondblclick="() => StartRename(bot.Key, bot.Value.BotName)">
-                   @(bot.Value.BotName ?? $"Бот: {bot.Key + 1}")
+                    @(bot.Value.BotName ?? $"Бот: {bot.Key + 1}")
                 </a>
             }
 
@@ -44,8 +44,36 @@
                     class="btn-close position-absolute top-0 end-0 mt-1 me-1"
                     style="z-index: 10;"
                     aria-label="Close"
-                    @onclick="() => BotDel(bot.Key)">
+                    @onclick="() => AskBotToDel(bot.Key)">
             </button>
+
+            @if (_isBotDelConfirmVisible)
+            {
+                <div class="modal-backdrop fade show"></div>
+
+                <div class="modal fade show d-block" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Удалить бота?</h5>
+                                <button class="btn-close"
+                                @onclick="() => {_isBotDelConfirmVisible = false;
+                                StateHasChanged();}"></button>
+                            </div>
+                            <div class="modal-body">
+                                Вы уверены?
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary"
+                                @onclick="() => {_isBotDelConfirmVisible = false;
+                                StateHasChanged();}">Отмена</button>
+                                <button class="btn btn-danger"
+                                @onclick="() => BotDel()">Удалить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
 
         </li>
     }
@@ -60,206 +88,206 @@
 </ul>
 
 <h1>Настройка бота</h1>
-        <div class="input-group mb-3">
-            <button class="btn btn-outline-secondary"
-                    type="button"
-                    id="button-addon1"
-                    @onclick="() => ToggleBot(_allBots[_selectedBotIndex])">
-                    @(_allBots[_selectedBotIndex].IsActive ? "Остановить бота" : "Запустить бота")
-            </button>
-            <input type="text"
-                   class="form-control @(_hasError ? "is-invalid" : "")"
-                   placeholder="Введите токен бота"
-                   aria-label="Bot Token input form"
-                   aria-describedby="button-addon1"
-                   @bind="_allBots[_selectedBotIndex].Token"/>
-        </div>
+<div class="input-group mb-3">
+    <button class="btn btn-outline-secondary"
+            type="button"
+            id="button-addon1"
+            @onclick="() => ToggleBot(_allBots[_selectedBotIndex])">
+        @(_allBots[_selectedBotIndex].IsActive ? "Остановить бота" : "Запустить бота")
+    </button>
+    <input type="text"
+           class="form-control @(_hasError ? "is-invalid" : "")"
+           placeholder="Введите токен бота"
+           aria-label="Bot Token input form"
+           aria-describedby="button-addon1"
+           @bind="_allBots[_selectedBotIndex].Token" />
+</div>
 
-        @if (_hasError)
-        {
-            <div class="text-danger mb-3">Ошибка: @_errorMessage</div>
-        }
-        @if (_hasStatus)
-        {
-            <div class="text-success mb-3">@_statusMessage</div>
-        }
-        @if (_allBots[_selectedBotIndex].IsActive)
-        {
-            <div class="post_container">
-                <h1>Настройка авто-постинга</h1>
+@if (_hasError)
+{
+    <div class="text-danger mb-3">Ошибка: @_errorMessage</div>
+}
+@if (_hasStatus)
+{
+    <div class="text-success mb-3">@_statusMessage</div>
+}
+@if (_allBots[_selectedBotIndex].IsActive)
+{
+    <div class="post_container">
+        <h1>Настройка авто-постинга</h1>
 
         @if (_allBots[_selectedBotIndex].Posts.Any())
-                {
-                    <p>Постов для публикации еще нет</p>
-                }
-                else
-                {
-                    <p>Постов для публикации: @(_allBots[_selectedBotIndex].Posts.Count)</p>
-                }
-
-        @foreach (var post in _allBots[_selectedBotIndex].Posts)
-                {
-                    <div class="post-item mb-4" @key="post.Id">
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle mb-3"
-                                    type="button"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                @GetGroupName(post.Group)
-                            </button>
-                            <ul class="dropdown-menu">
-                                @foreach (var group in _allBots[_selectedBotIndex].Groups)
-                                {
-                                    <li>
-                                        <a class="dropdown-item"
-                                           href="#"
-                                           @onclick="() => SelectGroup(post, group)">
-                                            @group.Name
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                            <button type="button" class="btn btn-danger mb-3 ms-sm-3"
-                                    @onclick="() => RemovePost(post)"
-                            >Удалить пост
-                            </button>
-                        </div>
-
-                        <div class="form-floating mb-3">
-                            <textarea class="form-control post-textarea"
-                                      @bind="post.PostText"
-                                      placeholder="Введите текст поста"></textarea>
-                            <label>Текст поста</label>
-                        </div>
-
-                        <div class="form-floating mb-3">
-                            <input type="datetime-local" class="form-control"
-                                   id="datetimeInput"
-                                   @bind="post.PostDateTime"/>
-                            <label for="datetimeInput">Дата и время публикации</label>
-                        </div>
-
-                        <div class="d-flex flex-column">
-                            <label class="form-label mb-1">Выберите частоту повторения</label>
-                            <div class="input-group d-flex gap-3 mb-3 mt-0">
-                                <div class="form-floating">
-                                    <input type="number"
-                                           class="form-control"
-                                           id="repeatDays"
-                                           placeholder="0"
-                                           min="0"
-                                           @bind="post.RepeatDays"/>
-                                    <label for="repeatDays">Дней</label>
-                                </div>
-                                <div class="form-floating">
-                                    <input type="number"
-                                           class="form-control"
-                                           id="repeatHours"
-                                           placeholder="0"
-                                           min="0"
-                                           max="23"
-                                           @bind="post.RepeatHours"/>
-                                    <label for="repeatHours">Часов</label>
-                                </div>
-                                <div class="form-floating">
-                                    <input type="number"
-                                           class="form-control"
-                                           id="repeatMinutes"
-                                           placeholder="0"
-                                           min="0"
-                                           max="59"
-                                           @bind="post.RepeatMinutes"/>
-                                    <label for="repeatMinutes">Минут</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex flex-column">
-                            <label class="form-label mb-1">Выберите дни повторения</label>
-
-                            <div class="btn-group btn-group-sm" role="group" aria-label="Repeat days checkboxes">
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Monday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Monday)">
-                                <label class="btn btn-outline-primary" 
-                                       for=@($"btncheck{_buttonCount++}")>Пн</label>
-
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Tuesday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Tuesday)">
-                                <label class="btn btn-outline-primary" 
-                                       for=@($"btncheck{_buttonCount++}")>Вт</label>
-
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Wednesday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Wednesday)">
-                                <label class="btn btn-outline-primary"
-                                       for=@($"btncheck{_buttonCount++}")>Ср</label>
-
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Thursday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Thursday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Чт</label>
-
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Friday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Friday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Пт</label>
-
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Saturday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Saturday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Сб</label>
-
-                                <input type="checkbox"
-                                       class="btn-check"
-                                       id=@($"btncheck{_buttonCount}")
-                                       autocomplete="off"
-                                       checked="@IsDayChecked(post, Days.Sunday)"
-                                       @onchange="() => DayAddOrRemove(post, Days.Sunday)">
-                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Вс</label>
-                            </div>
-                        </div>
-                    </div>
-                }
-
-                <div class="d-flex gap-3">
-                    <button type="button"
-                            class="btn btn-primary"
-                            @onclick="() => SaveChanges(true)">
-                        Сохранить изменения
-                    </button>
-
-                    <button type="button"
-                            class="btn btn-success"
-                            @onclick="AddPost">
-                        Добавить пост
-                    </button>
-                </div>
-            </div>
+        {
+            <p>Постов для публикации еще нет</p>
         }
         else
         {
-            <div class="text-bg-primary p-3">Для управления постами запустите бот</div>
+            <p>Постов для публикации: @(_allBots[_selectedBotIndex].Posts.Count)</p>
         }
+
+        @foreach (var post in _allBots[_selectedBotIndex].Posts)
+        {
+            <div class="post-item mb-4" @key="post.Id">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle mb-3"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        @GetGroupName(post.Group)
+                    </button>
+                    <ul class="dropdown-menu">
+                        @foreach (var group in _allBots[_selectedBotIndex].Groups)
+                        {
+                            <li>
+                                <a class="dropdown-item"
+                                   href="#"
+                                   @onclick="() => SelectGroup(post, group)">
+                                    @group.Name
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                    <button type="button" class="btn btn-danger mb-3 ms-sm-3"
+                            @onclick="() => RemovePost(post)">
+                        Удалить пост
+                    </button>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <textarea class="form-control post-textarea"
+                              @bind="post.PostText"
+                              placeholder="Введите текст поста"></textarea>
+                    <label>Текст поста</label>
+                </div>
+
+                <div class="form-floating mb-3">
+                    <input type="datetime-local" class="form-control"
+                           id="datetimeInput"
+                           @bind="post.PostDateTime" />
+                    <label for="datetimeInput">Дата и время публикации</label>
+                </div>
+
+                <div class="d-flex flex-column">
+                    <label class="form-label mb-1">Выберите частоту повторения</label>
+                    <div class="input-group d-flex gap-3 mb-3 mt-0">
+                        <div class="form-floating">
+                            <input type="number"
+                                   class="form-control"
+                                   id="repeatDays"
+                                   placeholder="0"
+                                   min="0"
+                                   @bind="post.RepeatDays" />
+                            <label for="repeatDays">Дней</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="number"
+                                   class="form-control"
+                                   id="repeatHours"
+                                   placeholder="0"
+                                   min="0"
+                                   max="23"
+                                   @bind="post.RepeatHours" />
+                            <label for="repeatHours">Часов</label>
+                        </div>
+                        <div class="form-floating">
+                            <input type="number"
+                                   class="form-control"
+                                   id="repeatMinutes"
+                                   placeholder="0"
+                                   min="0"
+                                   max="59"
+                                   @bind="post.RepeatMinutes" />
+                            <label for="repeatMinutes">Минут</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column">
+                    <label class="form-label mb-1">Выберите дни повторения</label>
+
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Repeat days checkboxes">
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Monday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Monday)">
+                        <label class="btn btn-outline-primary"
+                               for=@($"btncheck{_buttonCount++}")>Пн</label>
+
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Tuesday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Tuesday)">
+                        <label class="btn btn-outline-primary"
+                               for=@($"btncheck{_buttonCount++}")>Вт</label>
+
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Wednesday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Wednesday)">
+                        <label class="btn btn-outline-primary"
+                               for=@($"btncheck{_buttonCount++}")>Ср</label>
+
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Thursday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Thursday)">
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Чт</label>
+
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Friday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Friday)">
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Пт</label>
+
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Saturday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Saturday)">
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Сб</label>
+
+                        <input type="checkbox"
+                               class="btn-check"
+                               id=@($"btncheck{_buttonCount}")
+                               autocomplete="off"
+                               checked="@IsDayChecked(post, Days.Sunday)"
+                               @onchange="() => DayAddOrRemove(post, Days.Sunday)">
+                        <label class="btn btn-outline-primary" for=@($"btncheck{_buttonCount++}")>Вс</label>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="d-flex gap-3">
+            <button type="button"
+                    class="btn btn-primary"
+                    @onclick="() => SaveChanges(true)">
+                Сохранить изменения
+            </button>
+
+            <button type="button"
+                    class="btn btn-success"
+                    @onclick="AddPost">
+                Добавить пост
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-bg-primary p-3">Для управления постами запустите бот</div>
+}
 
 @code {
     private Action? _groupRepoChangedHandler;
@@ -272,88 +300,90 @@
     private int _buttonCount = 1;
     private int _selectedBotIndex { get; set; }
     private int? _editingBotIndex;
-	private string _editingBotName = string.Empty;
+    private string _editingBotName = string.Empty;
+    private int _botToDel;
+    private bool _isBotDelConfirmVisible = false;
 
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			_buttonCount = 1;
-			_allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
-													.ToDictionary(x => x.Item1, x => x.Item2)
-													?? throw new Exception(@"Exception in Home, can't load boats.");
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _buttonCount = 1;
+            _allBots = BotService.GetBotModels().Select((botmodel, index) => (index, botmodel))
+                                                    .ToDictionary(x => x.Item1, x => x.Item2)
+                                                    ?? throw new Exception(@"Exception in Home, can't load boats.");
 
-			_allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
+            _allBots[_selectedBotIndex].Posts = await PostsRepo.GetPostsByBotTokenAsync(_allBots[_selectedBotIndex].Token);
 
-			_groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
-			GroupRepo.StateChanged += _groupRepoChangedHandler;
-		}
-		catch (Exception ex)
-		{
-			HandleError("Ошибка инициализации: " + ex.Message);
-		}
-	}
+            _groupRepoChangedHandler = () => _ = OnGroupRepoChanged();
+            GroupRepo.StateChanged += _groupRepoChangedHandler;
+        }
+        catch (Exception ex)
+        {
+            HandleError("Ошибка инициализации: " + ex.Message);
+        }
+    }
 
-	private string GetGroupName(GroupModel? group)
-	{
-		if (group == null)
-			return "Выберите канал или группу";
+    private string GetGroupName(GroupModel? group)
+    {
+        if (group == null)
+            return "Выберите канал или группу";
 
-		return String.IsNullOrEmpty(group.Name)
-			? group.Name
-			: "Группа не найдена";
-	}
+        return String.IsNullOrEmpty(group.Name)
+            ? group.Name
+            : "Группа не найдена";
+    }
 
-	private async Task ToggleBot(BotModel bot)
-	{
-		_hasError = false;
-		_hasStatus = false;
-		Console.WriteLine(bot.IsActive);
+    private async Task ToggleBot(BotModel bot)
+    {
+        _hasError = false;
+        _hasStatus = false;
+        Console.WriteLine(bot.IsActive);
 
-		try
-		{
-			if (bot.IsActive)
-			{
-				await BotService.StopBot(bot.BotId);
-				ShowStatus("Бот успешно остановлен!");
-				Console.WriteLine("Bot successfully stopped");
-			}
-			else
-			{
-				if (!ValidateBotToken())
-					return;
+        try
+        {
+            if (bot.IsActive)
+            {
+                await BotService.StopBot(bot.BotId);
+                ShowStatus("Бот успешно остановлен!");
+                Console.WriteLine("Bot successfully stopped");
+            }
+            else
+            {
+                if (!ValidateBotToken())
+                    return;
 
-				await BotService.StartBot(bot.BotId, bot.Token);
-				ShowStatus("Бот успешно запущен!");
-				Console.WriteLine("Bot successfully started");
-			}
-		}
-		catch (Exception ex)
-		{
-			HandleError(ex.Message);
-		}
-	}
+                await BotService.StartBot(bot.BotId, bot.Token);
+                ShowStatus("Бот успешно запущен!");
+                Console.WriteLine("Bot successfully started");
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleError(ex.Message);
+        }
+    }
 
-	private bool ValidateBotToken()
-	{
-		const string pattern = @"^(?:\w+):(?:[\w:]+)";
-		if (Regex.IsMatch(_allBots[_selectedBotIndex].Token, pattern))
-			return true;
+    private bool ValidateBotToken()
+    {
+        const string pattern = @"^(?:\w+):(?:[\w:]+)";
+        if (Regex.IsMatch(_allBots[_selectedBotIndex].Token, pattern))
+            return true;
 
-		HandleError("Неверный формат токена");
-		return false;
-	}
+        HandleError("Неверный формат токена");
+        return false;
+    }
 
-	private void SelectGroup(PostModel post, GroupModel group)
-	{
-		post.Group = group;
-		post.GroupId = group.GroupId;
-		StateHasChanged();
-	}
+    private void SelectGroup(PostModel post, GroupModel group)
+    {
+        post.Group = group;
+        post.GroupId = group.GroupId;
+        StateHasChanged();
+    }
 
-	private void AddPost()
-	{
-		_allBots[_selectedBotIndex].Posts?.Add(new PostModel
+    private void AddPost()
+    {
+        _allBots[_selectedBotIndex].Posts?.Add(new PostModel
         {
             Id = Guid.NewGuid(),
             PostText = string.Empty,
@@ -363,110 +393,110 @@
             RepeatMinutes = 0
         });
 
-		StateHasChanged();
-	}
+        StateHasChanged();
+    }
 
-	private async Task SaveChanges(bool isNotificationOn)
-	{
-		try
-		{
-			await BotService.UpdateBotModel(_allBots[_selectedBotIndex]);
+    private async Task SaveChanges(bool isNotificationOn)
+    {
+        try
+        {
+            await BotService.UpdateBotModel(_allBots[_selectedBotIndex]);
 
-			if (isNotificationOn)
-				ShowStatus("Изменения успешно сохранены!");
-		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"Ошибка при сохранении постов: {ex.Message} {ex.InnerException.StackTrace}");
-			HandleError("Ошибка сохранения: " + ex.Message);
-		}
-	}
+            if (isNotificationOn)
+                ShowStatus("Изменения успешно сохранены!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при сохранении постов: {ex.Message} {ex.InnerException.StackTrace}");
+            HandleError("Ошибка сохранения: " + ex.Message);
+        }
+    }
 
-	private void HandleError(string message)
-	{
-		_hasError = true;
-		_errorMessage = message;
-		_hasStatus = false;
-		StateHasChanged();
-	}
+    private void HandleError(string message)
+    {
+        _hasError = true;
+        _errorMessage = message;
+        _hasStatus = false;
+        StateHasChanged();
+    }
 
-	private void ShowStatus(string message)
-	{
-		_hasStatus = true;
-		_statusMessage = message;
-		_hasError = false;
-		StateHasChanged();
-	}
+    private void ShowStatus(string message)
+    {
+        _hasStatus = true;
+        _statusMessage = message;
+        _hasError = false;
+        StateHasChanged();
+    }
 
-	private async Task OnGroupRepoChanged()
-	{
-		try
-		{
-			await InvokeAsync(() =>
-			{
-				StateHasChanged();
-				return Task.CompletedTask;
-			});
-		}
-		catch (Exception e)
-		{
-			Console.WriteLine($"Ошибка в обработчике GroupRepo: {e.Message}");
-		}
-	}
+    private async Task OnGroupRepoChanged()
+    {
+        try
+        {
+            await InvokeAsync(() =>
+            {
+                StateHasChanged();
+                return Task.CompletedTask;
+            });
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ошибка в обработчике GroupRepo: {e.Message}");
+        }
+    }
 
-	public void Dispose()
-	{
-		if (!_isDisposed && _groupRepoChangedHandler is not null)
-		{
-			GroupRepo.StateChanged -= _groupRepoChangedHandler;
-			_isDisposed = true;
-		}
-	}
+    public void Dispose()
+    {
+        if (!_isDisposed && _groupRepoChangedHandler is not null)
+        {
+            GroupRepo.StateChanged -= _groupRepoChangedHandler;
+            _isDisposed = true;
+        }
+    }
 
-	private Task RemovePost(PostModel post)
-	{
-		try
-		{
-			_allBots[_selectedBotIndex].Posts.Remove(post);
-		}
-		catch (Exception e)
-		{
-			Console.WriteLine($"Ошибка при удалении поста {e.Message}");
-		}
+    private Task RemovePost(PostModel post)
+    {
+        try
+        {
+            _allBots[_selectedBotIndex].Posts.Remove(post);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Ошибка при удалении поста {e.Message}");
+        }
 
-		return Task.CompletedTask;
-	}
+        return Task.CompletedTask;
+    }
 
-	private bool IsDayChecked(PostModel post, Days day)
-	{
-		if (post.Days.HasFlag(day))
-		{
-			return true;
-		}
-		return false;
-	}
+    private bool IsDayChecked(PostModel post, Days day)
+    {
+        if (post.Days.HasFlag(day))
+        {
+            return true;
+        }
+        return false;
+    }
 
-	private Task DayAddOrRemove(PostModel post, Days day)
-	{
-		if (post.Days.HasFlag(day))
-		{
-			post.Days &= ~day;
-		}
-		else
-		{
-			post.Days |= day;
-		}
-		StateHasChanged();
-		return Task.CompletedTask;
-	}
+    private Task DayAddOrRemove(PostModel post, Days day)
+    {
+        if (post.Days.HasFlag(day))
+        {
+            post.Days &= ~day;
+        }
+        else
+        {
+            post.Days |= day;
+        }
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
 
-	private void AddBot(MouseEventArgs args)
-	{
-		_allBots.Add(_allBots.Count,BotService.CreateNewBot());
-		StateHasChanged();
-	}
+    private void AddBot(MouseEventArgs args)
+    {
+        _allBots.Add(_allBots.Count, BotService.CreateNewBot());
+        StateHasChanged();
+    }
 
-    private async Task BotDel(int botId)
+    private async Task BotDel()
     {
         try
         {
@@ -474,17 +504,25 @@
             {
                 HandleError("Нельзя удалить последний бот!");
                 return;
-			}
+            }
 
-            await BotService.RemoveBot(_allBots[botId].BotId);
-            _allBots.Remove(botId);
+            if (_botToDel < 0 || _botToDel >= _allBots.Count)
+            {
+                HandleError("Некорректный индекс бота для удаления!");
+                return;
+            }
+
+            await BotService.RemoveBot(_allBots[_botToDel].BotId);
+            _allBots.Remove(_botToDel);
             _allBots = _allBots.Values.Select((botmodel, index) => (index, botmodel))
-												 .ToDictionary(x => x.Item1, x => x.Item2);
+                                                 .ToDictionary(x => x.Item1, x => x.Item2);
 
             if (_selectedBotIndex >= _allBots.Count)
             {
                 _selectedBotIndex = _allBots.Count - 1;
-			}
+            }
+
+            _isBotDelConfirmVisible = false;
 
             StateHasChanged();
         }
@@ -495,30 +533,37 @@
     }
 
     private void StartRename(int botKey, string currentName)
-{
-    _editingBotIndex = botKey;
-    _editingBotName = currentName;
-}
-
-private void CommitBotRename(int botKey)
-{
-    if (_editingBotIndex != botKey)
-        return;
-
-    if (!string.IsNullOrWhiteSpace(_editingBotName))
     {
-        _allBots[botKey].BotName = _editingBotName.Trim();
+        _editingBotIndex = botKey;
+        _editingBotName = currentName;
     }
 
-    _editingBotIndex = null;
-}
+    private void CommitBotRename(int botKey)
+    {
+        if (_editingBotIndex != botKey)
+            return;
 
-private void OnRenameKeyDown(KeyboardEventArgs e, int botKey)
-{
-    if (e.Key == "Enter")
-        CommitBotRename(botKey);
+        if (!string.IsNullOrWhiteSpace(_editingBotName))
+        {
+            _allBots[botKey].BotName = _editingBotName.Trim();
+        }
 
-    if (e.Key == "Escape")
         _editingBotIndex = null;
-}
     }
+
+    private void OnRenameKeyDown(KeyboardEventArgs e, int botKey)
+    {
+        if (e.Key == "Enter")
+            CommitBotRename(botKey);
+
+        if (e.Key == "Escape")
+            _editingBotIndex = null;
+    }
+
+    private void AskBotToDel(int botKey)
+    {
+        _botToDel = botKey;
+        _isBotDelConfirmVisible = true;
+        StateHasChanged();
+    }
+}
